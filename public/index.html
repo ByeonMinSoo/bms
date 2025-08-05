@@ -3,1177 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MinSooBot</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0;
-            padding: 0;
-        }
-
-        .chat-container {
-            width: 95%;
-            max-width: 1000px;
-            height: 90vh;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .chat-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 24px;
-            text-align: center;
-            font-size: 28px;
-            font-weight: 700;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-        }
-
-        .chat-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
-            z-index: -1;
-        }
-
-        .home-link {
-            color: #2c3e50;
-            text-decoration: none;
-            font-size: 1.2rem;
-            transition: transform 0.2s ease;
-        }
-
-        .home-link:hover {
-            transform: scale(1.1);
-        }
-
-        .chat-messages {
-            flex: 1;
-            padding: 10px;
-            overflow-y: auto;
-            background: #f8f9fa;
-        }
-
-        .message {
-            margin-bottom: 8px;
-            display: flex;
-            align-items: flex-start;
-        }
-
-        .message.user {
-            justify-content: flex-end;
-        }
-
-        .message.bot {
-            justify-content: flex-start;
-        }
-
-        .message-text {
-            margin: 0;
-            padding: 0;
-        }
-
-        .message-content {
-            padding: 16px 20px;
-            border-radius: 18px;
-            max-width: 70%;
-            word-wrap: break-word;
-            line-height: 1.6;
-            display: inline-block;
-            min-width: auto;
-            font-size: 15px;
-        }
-
-        .message.user .message-content {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-bottom-right-radius: 6px;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-            font-weight: 500;
-        }
-
-        .message.bot .message-content {
-            background: rgba(255, 255, 255, 0.9);
-            color: #1a1a1a;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border-bottom-left-radius: 6px;
-            position: relative;
-            backdrop-filter: blur(5px);
-        }
-
-        .message-actions {
-            display: none;
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            gap: 2px;
-            background: white;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 2px;
-            z-index: 100;
-        }
-
-        .action-button {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 6px;
-            padding: 6px 10px;
-            font-size: 11px;
-            color: #555;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: auto;
-            min-width: 30px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            font-weight: 500;
-        }
-
-        .action-button:hover {
-            background: rgba(102, 126, 234, 0.1);
-            border-color: rgba(102, 126, 234, 0.3);
-            color: #667eea;
-            transform: translateY(-1px);
-        }
-
-        .action-button[data-tooltip]:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            white-space: nowrap;
-            z-index: 1000;
-            margin-bottom: 4px;
-        }
-
-        .action-button[data-tooltip]:hover::before {
-            content: '';
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 3px solid transparent;
-            border-top-color: #333;
-            z-index: 1000;
-        }
-
-        .message:hover .message-actions {
-            display: flex;
-        }
-
-        .message-time {
-            display: none;
-        }
-
-        .chat-input-container {
-            padding: 20px;
-            background: white;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .chat-input-form {
-            display: flex;
-            gap: 10px;
-        }
-
-        .chat-input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 25px;
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        .chat-input:focus {
-            outline: none;
-            border-color: #a8e6cf;
-        }
-
-        .send-button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 20px;
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 18px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
-        .send-button:hover {
-            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-        }
-
-        .send-button:active {
-            transform: scale(0.95);
-        }
-
-        .loading {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: #666;
-            font-size: 14px;
-            font-weight: 400;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 12px;
-            margin: 4px 0;
-            opacity: 0.8;
-        }
-
-        .loading-spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid #e0e0e0;
-            border-top: 2px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s ease-in-out infinite;
-            flex-shrink: 0;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .clear-button {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 8px 16px;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.3s;
-        }
-
-        .clear-button:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        .welcome-message {
-            text-align: center;
-            color: #666;
-            font-style: italic;
-            margin: 5px 0;
-            font-size: 12px;
-        }
-
-        /* MinSooBot 전용 스타일 */
-        .legal-response {
-            background: #f8f9fa;
-            border-left: 4px solid #a8e6cf;
-            margin: 8px 0;
-            padding: 12px;
-            border-radius: 4px;
-        }
-
-        .legal-summary {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 8px;
-        }
-
-        .legal-summary h4 {
-            margin: 0 0 8px 0;
-            color: #155724;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .legal-summary p {
-            margin: 0;
-            color: #155724;
-            font-size: 12px;
-        }
-
-        .legal-section {
-            margin-bottom: 16px;
-            border-bottom: 1px solid #e9ecef;
-            padding-bottom: 12px;
-        }
-
-        .legal-section:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
-        .legal-section h5 {
-            display: flex;
-            align-items: center;
-            margin: 0 0 8px 0;
-            font-size: 13px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-
-        .legal-section h5 .icon {
-            margin-right: 6px;
-            font-size: 14px;
-        }
-
-        .legal-articles {
-            background: #f8f9fa;
-            border-radius: 6px;
-            padding: 10px;
-            margin: 8px 0;
-        }
-
-        .legal-article {
-            background: white;
-            padding: 8px;
-            margin: 4px 0;
-            border-radius: 4px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .legal-article strong {
-            color: #495057;
-            font-weight: bold;
-        }
-
-        .legal-explanation {
-            margin-top: 8px;
-            line-height: 1.5;
-        }
-
-        .collapsible {
-            cursor: pointer;
-            background: #f1f3f4;
-            border: none;
-            text-align: left;
-            width: 100%;
-            padding: 8px 12px;
-            border-radius: 6px;
-            margin: 4px 0;
-            font-size: 12px;
-            color: #495057;
-            transition: background-color 0.3s;
-        }
-
-        .collapsible:hover {
-            background: #e9ecef;
-        }
-
-        .collapsible:after {
-            content: '\25BC';
-            float: right;
-            font-size: 10px;
-            transition: transform 0.3s;
-        }
-
-        .collapsible.active:after {
-            transform: rotate(180deg);
-        }
-
-        .collapsible-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            background: #f8f9fa;
-            border-radius: 0 0 6px 6px;
-        }
-
-        .collapsible-content.show {
-            max-height: 500px;
-            padding: 10px 12px;
-        }
-
-        .disclaimer {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border: 1px solid #ffeaa7;
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 12px;
-            font-size: 11px;
-            color: #856404;
-            text-align: center;
-        }
-
-        .disclaimer strong {
-            color: #856404;
-        }
-
-        /* 개선된 텍스트 포맷팅 스타일 */
-        .section-header {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            border-left: 4px solid #2196f3;
-            padding: 12px 16px;
-            margin: 16px 0 8px 0;
-            border-radius: 8px;
-            font-weight: 600;
-            color: #1565c0;
-            box-shadow: 0 2px 4px rgba(33, 150, 243, 0.1);
-        }
-
-        .list-item {
-            margin: 8px 0;
-            padding-left: 8px;
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-        }
-
-        .list-number {
-            background: #a8e6cf;
-            color: #2c3e50;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 12px;
-            flex-shrink: 0;
-            min-width: 24px;
-            text-align: center;
-        }
-
-        .bullet {
-            color: #a8e6cf;
-            font-weight: bold;
-            font-size: 16px;
-            flex-shrink: 0;
-        }
-
-        .bold-text {
-            font-weight: 600;
-            color: #2c3e50;
-            background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin: 16px 0 8px 0;
-            padding-bottom: 4px;
-            border-bottom: 2px solid #a8e6cf;
-        }
-
-        .important-notice {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border: 1px solid #ffd54f;
-            border-left: 4px solid #ff9800;
-            padding: 12px 16px;
-            margin: 12px 0;
-            border-radius: 8px;
-            color: #f57c00;
-            font-weight: 500;
-            box-shadow: 0 2px 4px rgba(255, 152, 0, 0.1);
-        }
-
-        .link {
-            color: #1976d2;
-            text-decoration: none;
-            border-bottom: 1px dotted #1976d2;
-            transition: all 0.2s;
-        }
-
-        .link:hover {
-            color: #0d47a1;
-            border-bottom-color: #0d47a1;
-            background: rgba(25, 118, 210, 0.1);
-        }
-
-        .contact-link {
-            color: #388e3c;
-            text-decoration: none;
-            background: rgba(76, 175, 80, 0.1);
-            padding: 2px 6px;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-
-        .contact-link:hover {
-            background: rgba(76, 175, 80, 0.2);
-            color: #2e7d32;
-        }
-
-        .code-block {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            padding: 12px;
-            border-radius: 8px;
-            margin: 8px 0;
-            font-family: 'Consolas', monospace;
-            overflow-x: auto;
-        }
-
-        .inline-code {
-            background: #f1f3f4;
-            color: #d73502;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: 'Consolas', monospace;
-            font-size: 13px;
-        }
-
-        /* 채팅 메시지 개선 */
-        .message.bot .message-content {
-            background: linear-gradient(145deg, #ffffff 0%, #f8fffe 100%);
-            border: 1px solid #a8e6cf;
-            color: #2c3e50;
-            font-size: 13px;
-            line-height: 1.5;
-            width: auto;
-            max-width: 85%;
-            padding: 12px 16px;
-        }
-
-        .message.bot {
-            margin-bottom: 12px;
-        }
-
-        .bot-label {
-            display: inline-flex;
-            align-items: center;
-            background: #28a745;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 10px;
-            font-weight: bold;
-            margin-bottom: 6px;
-        }
-
-        .bot-label::before {
-            content: '⚖️';
-            margin-right: 4px;
-        }
-
-        /* 고정 면책 문구 */
-        .fixed-disclaimer {
-            position: fixed;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 243, 205, 0.95);
-            border: 1px solid #ffeaa7;
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 10px;
-            color: #856404;
-            max-width: 600px;
-            text-align: center;
-            backdrop-filter: blur(5px);
-            z-index: 1000;
-            display: none;
-        }
-
-        .fixed-disclaimer.show {
-            display: block;
-            animation: slideUp 0.3s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateX(-50%) translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0);
-            }
-        }
-
-        /* 응답 타이핑 개선 */
-        .message-content p {
-            margin: 0 0 8px 0;
-        }
-
-        .message-content p:last-child {
-            margin-bottom: 0;
-        }
-
-        .message-content ul, .message-content ol {
-            margin: 8px 0;
-            padding-left: 16px;
-        }
-
-        .message-content li {
-            margin-bottom: 4px;
-            font-size: 12px;
-        }
-
-        .message-content strong {
-            color: #2c3e50;
-        }
-
-        .message-content em {
-            color: #6c757d;
-            font-style: normal;
-            background: #f8f9fa;
-            padding: 1px 4px;
-            border-radius: 3px;
-        }
-    </style>
+    <title>민수Bot - 인사 상담</title>
+    <link rel="stylesheet" href="legal-ui.css">
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <a href="/" class="home-link">🏠</a>
-            MinSooBot
-            <button class="clear-button" onclick="clearChat()">대화 초기화</button>
+            <h1>🤖 민수Bot</h1>
+            <p>인사/노무 상담 도우미</p>
         </div>
         
         <div class="chat-messages" id="chatMessages">
-            <div class="welcome-message">
-                <strong>담당자: 변민수</strong><br>
-                📞 010-8871-9901 | 📧 minsoo158@nate.com
+            <div class="message bot-message">
+                <div class="message-content">
+                    안녕하세요! 인사팀 민수Bot입니다. 👋<br>
+                    근로기준법, 사내 규정, 직원 정보에 대해 궁금한 점이 있으시면 언제든지 물어보세요!
+                </div>
             </div>
         </div>
         
         <div class="chat-input-container">
-            <form class="chat-input-form" id="chatForm">
-                <input 
-                    type="text" 
-                    class="chat-input" 
-                    id="messageInput" 
-                    placeholder="메시지를 입력하세요..."
-                    autocomplete="off"
-                >
-                <button type="submit" class="send-button" id="sendButton">
-                    전송
+            <div class="input-wrapper">
+                <input type="text" id="messageInput" placeholder="메시지를 입력하세요..." maxlength="500">
+                <button id="sendButton" class="send-button">
+                    <span>전송</span>
                 </button>
-            </form>
+            </div>
         </div>
     </div>
 
     <script>
         let sessionId = null;
         let isLoading = false;
-        let lastUserMessage = '';
 
-        // 페이지 로드 완료 후 실행
-        window.onload = function() {
-            console.log('페이지 로드 완료');
-            
-            // 새 세션 시작
-            startNewSession();
-            
-            // 폼 이벤트 리스너 등록
-            const form = document.getElementById('chatForm');
-            const input = document.getElementById('messageInput');
-            
-            console.log('폼 찾음:', !!form);
-            console.log('입력창 찾음:', !!input);
-            
-            if (form) {
-                form.onsubmit = function(e) {
-                    e.preventDefault();
-                    console.log('폼 제출됨');
-                    sendMessage();
-                    return false;
-                };
-            }
-            
-            if (input) {
-                input.onkeypress = function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        console.log('Enter 키 눌림');
-                        sendMessage();
-                        return false;
-                    }
-                };
-            }
-        };
+        // DOM 요소들
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
 
-        // 메시지 전송 함수
-        function sendMessage() {
-            console.log('sendMessage 함수 호출됨');
-            
-            const input = document.getElementById('messageInput');
-            const message = input.value.trim();
-            
-            console.log('입력된 메시지:', message);
-            console.log('현재 sessionId:', sessionId);
-            
-            if (!message || isLoading) {
-                console.log('메시지가 없거나 로딩 중');
-                return;
-            }
-
-            if (!sessionId) {
-                console.log('세션 ID가 없음');
-                alert('서버 연결 중입니다. 잠시 후 다시 시도해주세요.');
-                return;
-            }
-            
-            // 사용자 메시지 표시
-            showMessage('사용자', message);
-            input.value = '';
-            lastUserMessage = message;
-            
-            // 로딩 시작
-            setLoading(true);
-            
-            // API 호출
-            console.log('API 호출 시작');
-            fetch('http://localhost:3000/api/chat/message', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    sessionId: sessionId,
-                    message: message
-                })
-            })
-            .then(response => {
-                console.log('응답 받음:', response.status);
-                return response.json();
-            })
-            .then(data => {
-                console.log('데이터:', data);
-                if (data.error) {
-                    showMessage('시스템', data.error, 'error');
-                } else {
-                    showMessage('근로기준법 상담봇', data.message);
-                }
-            })
-            .catch(error => {
-                console.error('오류:', error);
-                showMessage('시스템', '서버 연결에 실패했습니다.', 'error');
-            })
-            .finally(() => {
-                setLoading(false);
-            });
-        }
-
-        // 새 세션 시작
-        function startNewSession() {
-            console.log('새 세션 시작 중...');
-            
-            fetch('http://localhost:3000/api/chat/start', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                sessionId = data.sessionId;
-                console.log('세션 시작됨:', sessionId);
-            })
-            .catch(error => {
-                console.error('세션 시작 실패:', error);
-                showMessage('시스템', '서버 연결에 실패했습니다.', 'error');
-            });
-        }
-
-        // 액션 버튼 기능들
-        function shareMessage(content) {
-            if (navigator.share) {
-                navigator.share({
-                    title: 'MinSooBot 답변',
-                    text: content,
-                    url: window.location.href
-                }).then(() => {
-                    console.log('공유 성공');
-                }).catch((error) => {
-                    console.log('공유 실패:', error);
-                    fallbackShare(content);
-                });
-            } else {
-                fallbackShare(content);
-            }
-        }
-
-        function fallbackShare(content) {
-                            const shareText = `MinSooBot 답변:\n\n${content}\n\n출처: ${window.location.href}`;
-            copyToClipboard(shareText);
-            alert('답변이 클립보드에 복사되었습니다!');
-        }
-
-        function copyMessage(content) {
-            copyToClipboard(content);
-            
-            // 시각적 피드백
-            const button = event.target;
-            const originalText = button.innerHTML;
-            button.innerHTML = '✅ 복사됨';
-            button.style.background = '#a8e6cf';
-            
-            setTimeout(() => {
-                button.innerHTML = originalText;
-                button.style.background = '';
-            }, 2000);
-        }
-
-        function copyToClipboard(text) {
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(text);
-            } else {
-                // 폴백 방법
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                } catch (err) {
-                    console.error('복사 실패:', err);
-                }
-                document.body.removeChild(textArea);
-            }
-        }
-
-        // 대화 초기화
-        async function clearChat() {
-            if (!sessionId) return;
-            
+        // 새 대화 시작
+        async function startNewSession() {
             try {
-                await fetch(`http://localhost:3000/api/chat/history/${sessionId}`, {
-                    method: 'DELETE'
+                const response = await fetch('/api/chat/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
-                
-                // 화면 초기화
-                const messagesContainer = document.getElementById('chatMessages');
-                messagesContainer.innerHTML = `
-                    <div class="welcome-message">
-                        <strong>담당자: 변민수</strong><br>
-                        📞 010-8871-9901 | 📧 minsoo158@nate.com
-                    </div>
-                `;
-                
-                console.log('대화가 초기화되었습니다.');
+                const data = await response.json();
+                if (data.success) {
+                    sessionId = data.sessionId;
+                    console.log('새 세션 시작:', sessionId);
+                }
             } catch (error) {
-                console.error('대화 초기화 실패:', error);
-                showMessage('시스템', '대화 초기화에 실패했습니다.', 'error');
+                console.error('세션 시작 실패:', error);
             }
         }
 
-        function regenerateResponse() {
-            if (lastUserMessage && sessionId) {
-                // 로딩 표시
-                setLoading(true);
-                
-                fetch('http://localhost:3000/api/chat/message', {
+        // 메시지 전송
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || isLoading) return;
+
+            // 사용자 메시지 표시
+            addMessage(message, 'user');
+            messageInput.value = '';
+            isLoading = true;
+            sendButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/chat/message', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        sessionId: sessionId,
-                        message: lastUserMessage
+                        message: message,
+                        sessionId: sessionId
                     })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        showMessage('시스템', data.error, 'error');
-                    } else {
-                        showMessage('MinSooBot', data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('재생성 실패:', error);
-                    showMessage('시스템', '답변 재생성에 실패했습니다.', 'error');
-                })
-                .finally(() => {
-                    setLoading(false);
                 });
-            } else {
-                alert('재생성할 메시지가 없습니다.');
-            }
-        }
 
-        // MinSooBot 응답 포맷팅 함수 - 가독성 개선
-        function formatLegalResponse(text) {
-            // 텍스트가 너무 복잡하면 단순 포맷팅만 적용
-            if (text.length > 1000 || text.includes('bad XRef entry')) {
-                return `<div class="legal-response">
-                    <div class="bot-label">MinSooBot</div>
-                    <div class="message-content">${formatText(text)}</div>
-                </div>`;
-            }
-            
-            // 기본 구조 체크 - 더 안전한 분할
-            const sections = text.split(/(?=\*\*[가-힣\s]+:\s*|\*\*관련\s*조항|📌)/g);
-            
-            if (sections.length < 2) {
-                // 일반 텍스트 응답
-                return `<div class="legal-response">
-                    <div class="bot-label">MinSooBot</div>
-                    <div class="message-content">${formatText(text)}</div>
-                </div>`;
-            }
-
-            let summary = '';
-            let articles = '';
-            let explanation = '';
-            let disclaimer = '';
-            
-            sections.forEach(section => {
-                const trimmed = section.trim();
-                if (trimmed.includes('질문 요약') || trimmed.includes('문의 내용')) {
-                    summary = trimmed.replace(/\*\*.*?:\s*/, '');
-                } else if (trimmed.includes('관련 조항') || trimmed.includes('법령명')) {
-                    articles = trimmed;
-                } else if (trimmed.includes('상세 설명') || trimmed.includes('설명')) {
-                    explanation = trimmed.replace(/\*\*.*?:\s*/, '');
-                } else if (trimmed.includes('📌') || trimmed.includes('안내사항')) {
-                    disclaimer = trimmed;
+                const data = await response.json();
+                
+                if (data.success) {
+                    addMessage(data.response, 'bot');
+                } else {
+                    addMessage('죄송합니다. 오류가 발생했습니다.', 'bot');
                 }
-            });
-
-            return `
-                <div class="legal-response">
-                    <div class="bot-label">MinSooBot</div>
-                    
-                    ${summary ? `
-                        <div class="legal-summary">
-                            <h4>📋 문의 요약</h4>
-                            <div class="message-content">${formatText(summary)}</div>
-                        </div>
-                    ` : ''}
-                    
-                    ${articles ? `
-                        <div class="legal-section">
-                            <h5><span class="icon">⚖️</span>관련 법령 조항</h5>
-                            <div class="legal-articles">
-                                ${formatLegalArticles(articles)}
-                            </div>
-                        </div>
-                    ` : ''}
-                    
-                    ${explanation ? `
-                        <div class="legal-section">
-                            <h5><span class="icon">💡</span>상세 설명</h5>
-                            <div class="legal-explanation message-content">${formatText(explanation)}</div>
-                        </div>
-                    ` : ''}
-                    
-                    ${disclaimer ? `
-                        <div class="disclaimer">
-                            ${disclaimer.replace(/📌\s*/, '')}
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        }
-
-        // 법령 조항 포맷팅 - 가독성 개선
-        function formatLegalArticles(text) {
-            // 텍스트가 너무 복잡하면 단순 처리
-            if (text.includes('bad XRef entry') || text.length > 1000) {
-                return `<div style="background:#f8f9fa;padding:12px;border-radius:6px;margin:8px 0;">${formatText(text)}</div>`;
-            }
-            
-            const lines = text.split('\n').filter(line => line.trim());
-            let result = '';
-            
-            lines.forEach(line => {
-                const trimmed = line.trim();
-                if (trimmed.includes('제') && trimmed.includes('조')) {
-                    result += `<div style="background:#e3f2fd;padding:8px;margin:4px 0;border-radius:4px;border-left:3px solid #2196f3;"><strong>${trimmed}</strong></div>`;
-                } else if (trimmed.length > 5) {
-                    result += `<div style="padding:4px 0;margin:2px 0;">${trimmed}</div>`;
-                }
-            });
-            
-            return result || `<div style="background:#f8f9fa;padding:12px;border-radius:6px;margin:8px 0;">${formatText(text)}</div>`;
-        }
-
-        // 접기/펼치기 토글
-        function toggleCollapsible(element) {
-            element.classList.toggle('active');
-            const content = element.nextElementSibling;
-            
-            if (content.classList.contains('show')) {
-                content.classList.remove('show');
-            } else {
-                content.classList.add('show');
+            } catch (error) {
+                console.error('메시지 전송 실패:', error);
+                addMessage('네트워크 오류가 발생했습니다. 다시 시도해주세요.', 'bot');
+            } finally {
+                isLoading = false;
+                sendButton.disabled = false;
+                messageInput.focus();
             }
         }
 
-        // 고정 면책 문구 표시
-        function showFixedDisclaimer() {
-            const disclaimer = document.querySelector('.fixed-disclaimer');
-            if (!disclaimer) {
-                const disclaimerDiv = document.createElement('div');
-                disclaimerDiv.className = 'fixed-disclaimer';
-                disclaimerDiv.innerHTML = '📌 이 답변은 법률 자문이 아닌 참고용 안내입니다. 정확한 해석은 고용노동부 또는 공인노무사와 상담하세요.';
-                document.body.appendChild(disclaimerDiv);
-            }
-            
-            const disclaimerElement = document.querySelector('.fixed-disclaimer');
-            disclaimerElement.classList.add('show');
-            
-            setTimeout(() => {
-                disclaimerElement.classList.remove('show');
-            }, 5000);
-        }
-
-        // showMessage 함수 수정 (기존 함수 대체)
-        function showMessage(sender, message) {
-            const chatMessages = document.getElementById('chatMessages');
+        // 메시지 추가
+        function addMessage(content, sender) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender === '사용자' ? 'user' : 'bot'}`;
+            messageDiv.className = `message ${sender}-message`;
             
-            let formattedMessage;
-            if (sender === 'MinSooBot') {
-                formattedMessage = formatLegalResponse(message);
-                setTimeout(showFixedDisclaimer, 1000); // 1초 후 면책 문구 표시
-            } else {
-                formattedMessage = `<div class="message-content">${formatText(message)}</div>`;
-            }
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = content.replace(/\n/g, '<br>');
             
-            messageDiv.innerHTML = formattedMessage;
-            
-            // 봇 메시지에 액션 버튼 추가
-            if (sender === 'MinSooBot') {
-                const actionButtons = `
-                    <div class="message-actions">
-                        <button class="action-button" onclick="shareMessage(this)" data-tooltip="공유하기">공유</button>
-                        <button class="action-button" onclick="copyMessage(this)" data-tooltip="복사하기">복사</button>
-                        <button class="action-button" onclick="regenerateResponse()" data-tooltip="재생성">재생성</button>
-                    </div>
-                `;
-                messageDiv.innerHTML += actionButtons;
-            }
-            
+            messageDiv.appendChild(contentDiv);
             chatMessages.appendChild(messageDiv);
+            
+            // 스크롤을 맨 아래로
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // 로딩 상태 설정
-        function setLoading(loading) {
-            isLoading = loading;
-            const sendButton = document.getElementById('sendButton');
-            const input = document.getElementById('messageInput');
-            
-            if (loading) {
-                sendButton.disabled = true;
-                sendButton.innerHTML = '⋯';
-                sendButton.style.opacity = '0.6';
-                input.disabled = true;
-                input.style.opacity = '0.7';
-                
-                // 로딩 메시지 표시
-                const messagesContainer = document.getElementById('chatMessages');
-                const loadingDiv = document.createElement('div');
-                loadingDiv.className = 'message bot';
-                loadingDiv.id = 'loadingMessage';
-                loadingDiv.innerHTML = `
-                    <div class="message-content">
-                        <div class="loading">
-                            <div class="loading-spinner"></div>
-                            <span>답변을 생성하고 있습니다...</span>
-                        </div>
-                    </div>
-                `;
-                messagesContainer.appendChild(loadingDiv);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            } else {
-                sendButton.disabled = false;
-                sendButton.innerHTML = '→';
-                sendButton.style.opacity = '1';
-                input.disabled = false;
-                input.style.opacity = '1';
-                
-                // 로딩 메시지 제거
-                const loadingMessage = document.getElementById('loadingMessage');
-                if (loadingMessage) {
-                    loadingMessage.remove();
-                }
+        // 이벤트 리스너
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
             }
-        }
+        });
 
-        // 텍스트 포맷팅 함수 - 가독성 대폭 개선
-        function formatText(text) {
-            // 텍스트가 너무 복잡하거나 깨진 경우 단순 처리
-            if (text.includes('bad XRef entry') || text.length > 2000) {
-                // 단순한 줄바꿈만 적용
-                text = text.replace(/\n/g, '<br>');
-                return text;
-            }
-            
-            // 1. 기본 줄바꿈 처리
-            text = text.replace(/\n/g, '<br>');
-            
-            // 2. 볼드 텍스트 처리
-            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            
-            // 3. 섹션 제목 처리
-            text = text.replace(/(\*\*[가-힣\s]+:\s*)/g, '<br><br><strong>$1</strong><br>');
-            
-            // 4. 번호 목록 처리
-            text = text.replace(/(\d+\.\s+)/g, '<br><br>$1');
-            
-            // 5. 불릿 포인트 처리
-            text = text.replace(/([•-]\s+)/g, '<br>• ');
-            
-            // 6. 중요한 정보 블록 처리
-            text = text.replace(/(📌.*?)(<br><br>|$)/g, '<br><br><div style="background:#fff3cd;border-left:4px solid #ffc107;padding:12px;margin:8px 0;border-radius:6px;">$1</div>');
-            
-            // 7. 링크 처리
-            const urlRegex = /(https?:\/\/[^\s]+)/g;
-            text = text.replace(urlRegex, '<a href="$1" target="_blank" style="color:#007bff;text-decoration:none;">$1</a>');
-            
-            // 8. 이메일과 전화번호 처리
-            const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
-            text = text.replace(emailRegex, '<a href="mailto:$1" style="color:#007bff;text-decoration:none;">$1</a>');
-            
-            const phoneRegex = /(01[0-9]-\d{4}-\d{4})/g;
-            text = text.replace(phoneRegex, '<a href="tel:$1" style="color:#007bff;text-decoration:none;">$1</a>');
-            
-            // 9. 코드 블록 처리
-            text = text.replace(/```(.*?)```/gs, '<pre style="background:#f8f9fa;padding:12px;border-radius:6px;margin:8px 0;overflow-x:auto;"><code>$1</code></pre>');
-            text = text.replace(/`([^`]+)`/g, '<code style="background:#f8f9fa;padding:2px 6px;border-radius:4px;font-family:monospace;">$1</code>');
-            
-            return text;
-        }
+        // 페이지 로드 시 세션 시작
+        window.addEventListener('load', startNewSession);
     </script>
+</body>
+</html> 

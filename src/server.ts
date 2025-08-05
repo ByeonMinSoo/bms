@@ -105,9 +105,9 @@ app.post('/api/chat/message', async (req, res): Promise<void> => {
       messages: [
         { role: 'system' as const, content: systemPrompt + contextPrompt },
         ...conversationHistory[sessionId].map(msg => ({
-          role: msg.role as 'user' | 'assistant' | 'system',
+          role: msg.role,
           content: msg.content
-        }))
+        })) as Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
       ],
       max_tokens: 1000,
       temperature: 0.7,

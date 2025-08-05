@@ -26,8 +26,8 @@ const openai = new OpenAI({
   apiKey: OPENAI_API_KEY,
 });
 
-// 대화 세션 저장소 (인메모리)
-const conversationHistory: { [sessionId: string]: Array<{ role: string; content: string }> } = {};
+// 대화 세션 저장소 (인메모리) - 타입 수정
+const conversationHistory: { [sessionId: string]: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> } = {};
 
 // 시스템 프롬프트 생성 함수
 function createSystemPrompt(): string {
@@ -99,12 +99,15 @@ app.post('/api/chat/message', async (req, res): Promise<void> => {
       ? `\n\n관련 정보:\n${relevantInfo.join('\n\n')}` 
       : '';
 
-    // OpenAI API 호출
+    // OpenAI API 호출 - 타입 수정
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
-        { role: 'system', content: systemPrompt + contextPrompt },
-        ...conversationHistory[sessionId]
+        { role: 'system' as const, content: systemPrompt + contextPrompt },
+        ...conversationHistory[sessionId].map(msg => ({
+          role: msg.role as 'user' | 'assistant' | 'system',
+          content: msg.content
+        }))
       ],
       max_tokens: 1000,
       temperature: 0.7,

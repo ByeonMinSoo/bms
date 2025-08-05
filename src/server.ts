@@ -104,11 +104,11 @@ app.post('/api/chat/message', async (req, res): Promise<void> => {
     const conversationMessages = conversationHistory[sessionId].map(msg => ({
       role: msg.role as 'user' | 'assistant' | 'system',
       content: msg.content
-    }));
+    })) as any;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
-      messages: [systemMessage, ...conversationMessages],
+      messages: [systemMessage, ...conversationMessages] as any,
       max_tokens: 1000,
       temperature: 0.7,
     });

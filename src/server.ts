@@ -100,17 +100,15 @@ app.post('/api/chat/message', async (req, res): Promise<void> => {
       : '';
 
     // OpenAI API 호출 - 타입 수정
-    const messages = [
-      { role: 'system' as const, content: systemPrompt + contextPrompt },
-      ...conversationHistory[sessionId].map(msg => ({
-        role: msg.role as const,
-        content: msg.content
-      }))
-    ];
+    const systemMessage = { role: 'system' as 'system', content: systemPrompt + contextPrompt };
+    const conversationMessages = conversationHistory[sessionId].map(msg => ({
+      role: msg.role as 'user' | 'assistant' | 'system',
+      content: msg.content
+    }));
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
-      messages: messages,
+      messages: [systemMessage, ...conversationMessages],
       max_tokens: 1000,
       temperature: 0.7,
     });

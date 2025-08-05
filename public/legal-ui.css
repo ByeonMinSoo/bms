@@ -1,0 +1,239 @@
+/* 근로기준법 상담봇 전용 스타일 */
+.legal-response {
+    background: linear-gradient(145deg, #f8fffe 0%, #f0f9f7 100%);
+    border: 1px solid #a8e6cf;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 8px 0;
+    font-size: 12px;
+    line-height: 1.5;
+    box-shadow: 0 2px 8px rgba(168, 230, 207, 0.1);
+}
+
+.legal-summary {
+    background: #e8f5e8;
+    border-left: 4px solid #28a745;
+    padding: 12px;
+    margin-bottom: 16px;
+    border-radius: 0 8px 8px 0;
+}
+
+.legal-summary h4 {
+    margin: 0 0 8px 0;
+    color: #155724;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.legal-summary p {
+    margin: 0;
+    color: #155724;
+    font-size: 11px;
+}
+
+.legal-section {
+    margin-bottom: 16px;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 12px;
+}
+
+.legal-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.legal-section h5 {
+    display: flex;
+    align-items: center;
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.legal-section h5 .icon {
+    margin-right: 6px;
+    font-size: 13px;
+}
+
+.legal-articles {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 10px;
+    margin: 8px 0;
+}
+
+.legal-article {
+    margin-bottom: 8px;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.legal-article strong {
+    color: #495057;
+    font-weight: bold;
+}
+
+.legal-explanation {
+    color: #495057;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.collapsible {
+    cursor: pointer;
+    background: #f1f3f4;
+    border: none;
+    text-align: left;
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 4px 0;
+    font-size: 11px;
+    color: #495057;
+    transition: background-color 0.3s;
+}
+
+.collapsible:hover {
+    background: #e9ecef;
+}
+
+.collapsible:after {
+    content: '\25BC';
+    float: right;
+    font-size: 9px;
+    transition: transform 0.3s;
+}
+
+.collapsible.active:after {
+    transform: rotate(180deg);
+}
+
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background: #f8f9fa;
+    border-radius: 0 0 6px 6px;
+}
+
+.collapsible-content.show {
+    max-height: 500px;
+    padding: 10px 12px;
+}
+
+.disclaimer {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 12px;
+    font-size: 10px;
+    color: #856404;
+    text-align: center;
+}
+
+.disclaimer strong {
+    color: #856404;
+}
+
+/* 채팅 메시지 개선 */
+.message.bot .message-content {
+    background: linear-gradient(145deg, #ffffff 0%, #f8fffe 100%);
+    border: 1px solid #a8e6cf;
+    color: #2c3e50;
+    font-size: 12px;
+    line-height: 1.4;
+    width: auto;
+    max-width: 85%;
+    padding: 12px 16px;
+}
+
+.message.bot {
+    margin-bottom: 12px;
+}
+
+.bot-label {
+    display: inline-flex;
+    align-items: center;
+    background: #28a745;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 9px;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.bot-label::before {
+    content: '⚖️';
+    margin-right: 4px;
+}
+
+/* 고정 면책 문구 */
+.fixed-disclaimer {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 243, 205, 0.95);
+    border: 1px solid #ffeaa7;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 9px;
+    color: #856404;
+    max-width: 600px;
+    text-align: center;
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    display: none;
+}
+
+.fixed-disclaimer.show {
+    display: block;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* 응답 타이핑 개선 */
+.message-content p {
+    margin: 0 0 6px 0;
+    font-size: 11px;
+}
+
+.message-content p:last-child {
+    margin-bottom: 0;
+}
+
+.message-content ul, .message-content ol {
+    margin: 6px 0;
+    padding-left: 16px;
+}
+
+.message-content li {
+    margin-bottom: 3px;
+    font-size: 11px;
+}
+
+.message-content strong {
+    color: #2c3e50;
+}
+
+.message-content em {
+    color: #6c757d;
+    font-style: normal;
+    background: #f8f9fa;
+    padding: 1px 4px;
+    border-radius: 3px;
+} 

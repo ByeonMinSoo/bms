@@ -3,17 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>민수Bot - 인사 상담 서비스</title>
+    <title>민수Bot - 인사/노무 상담 도우미</title>
     <link rel="stylesheet" href="legal-ui.css">
+    <style>
+        .landing-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .landing-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .hero-section h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero-section h2 {
+            font-size: 1.5rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .hero-description {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 40px;
+        }
+        
+        .features-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .feature-card h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .feature-card p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: transform 0.2s;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .disclaimer {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
     <div class="landing-container">
         <div class="landing-content">
             <div class="hero-section">
-                <h1>🤖 민수Bot</h1>
+                <h1>민수Bot</h1>
                 <h2>인사/노무 상담 도우미</h2>
                 <p class="hero-description">
-                    근로기준법, 사내 규정, 직원 정보에 대한 모든 궁금증을 해결해드립니다.
+                    근로기준법, 사내 규정, 직원 정보에 대한 문의를 AI가 도와드립니다.<br>
+                    복잡한 법령도 쉽게 이해할 수 있도록 친절하게 설명해드려요!
                 </p>
             </div>
             
@@ -21,32 +117,26 @@
                 <div class="feature-card">
                     <div class="feature-icon">📋</div>
                     <h3>법령 정보</h3>
-                    <p>근로기준법, 시행령, 시행규칙 관련 조문 검색</p>
+                    <p>근로기준법, 시행령, 시행규칙의 관련 조항을 빠르게 찾아드립니다.</p>
                 </div>
-                
                 <div class="feature-card">
                     <div class="feature-icon">👥</div>
                     <h3>직원 정보</h3>
-                    <p>직원 정보 및 조직도 조회</p>
+                    <p>회사 직원들의 부서, 직급, 연락처 정보를 쉽게 조회할 수 있습니다.</p>
                 </div>
-                
                 <div class="feature-card">
                     <div class="feature-icon">📜</div>
                     <h3>사내 규정</h3>
-                    <p>출장비, 재택근무, 교육훈련비 등 규정 안내</p>
+                    <p>출장비, 재택근무, 교육훈련 등 다양한 사내 규정을 안내해드립니다.</p>
                 </div>
             </div>
             
-            <div class="cta-section">
-                <a href="/chat" class="cta-button">
-                    상담 시작하기
-                </a>
-            </div>
+            <a href="/chat" class="cta-button">채팅 시작하기</a>
             
-            <div class="info-section">
-                <p class="disclaimer">
-                    ⚠️ 이 서비스는 참고용 안내입니다. 정확한 해석이나 적용은 고용노동부 또는 공인노무사와 상담하시기 바랍니다.
-                </p>
+            <div class="disclaimer">
+                <strong>주의사항:</strong><br>
+                이 서비스는 법률 자문이 아닌 참고용 안내입니다.<br>
+                정확한 해석이나 적용은 고용노동부 또는 공인노무사와 상담하시기 바랍니다.
             </div>
         </div>
     </div>

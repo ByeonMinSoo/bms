@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "name": "minsu-bot",
   "builds": [
     {
       "src": "src/server.ts",
@@ -8,8 +9,15 @@
   ],
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "src/server.ts"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/src/server.ts"
+      "dest": "src/server.ts"
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 } 

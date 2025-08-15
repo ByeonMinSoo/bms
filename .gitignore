@@ -1,38 +1,19 @@
 # Dependencies
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Build outputs
-dist/
-build/
-.next/
-out/
 
 # Environment variables
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS files
-.DS_Store
-Thumbs.db
+.env.production
 
 # Logs
-logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Runtime data
-pids/
+pids
 *.pid
 *.seed
 *.pid.lock
@@ -41,7 +22,7 @@ pids/
 coverage/
 
 # nyc test coverage
-.nyc_output/
+.nyc_output
 
 # Dependency directories
 jspm_packages/
@@ -61,12 +42,42 @@ jspm_packages/
 # dotenv environment variables file
 .env
 
-# Vercel
-.vercel
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
 
-# TypeScript cache
-*.tsbuildinfo
+# next.js build output
+.next
 
-# Temporary files
-tmp/
-temp/
+# nuxt.js build output
+.nuxt
+
+# vuepress build output
+.vuepress/dist
+
+# Serverless directories
+.serverless
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Build outputs
+dist/
+build/

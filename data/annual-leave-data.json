@@ -1,0 +1,542 @@
+[
+  {
+    "employeeId": "EMP-0003",
+    "employeeName": "손예은",
+    "department": "인사팀",
+    "employeeNumber": "EMP-0003",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0005",
+    "employeeName": "오현정",
+    "department": "생산팀",
+    "employeeNumber": "EMP-0005",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0006",
+    "employeeName": "권숙자",
+    "department": "인사팀",
+    "employeeNumber": "EMP-0006",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0008",
+    "employeeName": "이진우",
+    "department": "재무팀",
+    "employeeNumber": "EMP-0008",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0011",
+    "employeeName": "우상호",
+    "department": "인사팀",
+    "employeeNumber": "EMP-0011",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0012",
+    "employeeName": "곽영호",
+    "department": "재무팀",
+    "employeeNumber": "EMP-0012",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0013",
+    "employeeName": "서영호",
+    "department": "IT팀",
+    "employeeNumber": "EMP-0013",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0014",
+    "employeeName": "송성호",
+    "department": "생산팀",
+    "employeeNumber": "EMP-0014",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0015",
+    "employeeName": "이민서",
+    "department": "품질관리팀",
+    "employeeNumber": "EMP-0015",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0017",
+    "employeeName": "남지현",
+    "department": "품질관리팀",
+    "employeeNumber": "EMP-0017",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0021",
+    "employeeName": "심지우",
+    "department": "인사팀",
+    "employeeNumber": "EMP-0021",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0022",
+    "employeeName": "성은주",
+    "department": "품질관리팀",
+    "employeeNumber": "EMP-0022",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0023",
+    "employeeName": "주은주",
+    "department": "연구개발팀",
+    "employeeNumber": "EMP-0023",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0024",
+    "employeeName": "김숙자",
+    "department": "재무팀",
+    "employeeNumber": "EMP-0024",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0025",
+    "employeeName": "이상철",
+    "department": "연구개발팀",
+    "employeeNumber": "EMP-0025",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0027",
+    "employeeName": "김성민",
+    "department": "마케팅팀",
+    "employeeNumber": "EMP-0027",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0030",
+    "employeeName": "최보람",
+    "department": "IT팀",
+    "employeeNumber": "EMP-0030",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0038",
+    "employeeName": "박준서",
+    "department": "IT팀",
+    "employeeNumber": "EMP-0038",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0039",
+    "employeeName": "이민재",
+    "department": "품질관리팀",
+    "employeeNumber": "EMP-0039",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0040",
+    "employeeName": "박은서",
+    "department": "생산팀",
+    "employeeNumber": "EMP-0040",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0042",
+    "employeeName": "홍정식",
+    "department": "영업팀",
+    "employeeNumber": "EMP-0042",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0046",
+    "employeeName": "박아름",
+    "department": "인사팀",
+    "employeeNumber": "EMP-0046",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0047",
+    "employeeName": "이상철",
+    "department": "재무팀",
+    "employeeNumber": "EMP-0047",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0048",
+    "employeeName": "배영수",
+    "department": "마케팅팀",
+    "employeeNumber": "EMP-0048",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0049",
+    "employeeName": "지예진",
+    "department": "인사팀",
+    "employeeNumber": "EMP-0049",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0050",
+    "employeeName": "이유진",
+    "department": "마케팅팀",
+    "employeeNumber": "EMP-0050",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0052",
+    "employeeName": "김영일",
+    "department": "재무팀",
+    "employeeNumber": "EMP-0052",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0053",
+    "employeeName": "박명숙",
+    "department": "연구개발팀",
+    "employeeNumber": "EMP-0053",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0054",
+    "employeeName": "박준서",
+    "department": "생산팀",
+    "employeeNumber": "EMP-0054",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0055",
+    "employeeName": "오민수",
+    "department": "영업팀",
+    "employeeNumber": "EMP-0055",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0056",
+    "employeeName": "최지영",
+    "department": "영업팀",
+    "employeeNumber": "EMP-0056",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0057",
+    "employeeName": "박종수",
+    "department": "연구개발팀",
+    "employeeNumber": "EMP-0057",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0059",
+    "employeeName": "최하은",
+    "department": "마케팅팀",
+    "employeeNumber": "EMP-0059",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0060",
+    "employeeName": "이은지",
+    "department": "IT팀",
+    "employeeNumber": "EMP-0060",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0062",
+    "employeeName": "노지연",
+    "department": "연구개발팀",
+    "employeeNumber": "EMP-0062",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0063",
+    "employeeName": "한예은",
+    "department": "품질관리팀",
+    "employeeNumber": "EMP-0063",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0064",
+    "employeeName": "김지은",
+    "department": "연구개발팀",
+    "employeeNumber": "EMP-0064",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0065",
+    "employeeName": "김현우",
+    "department": "연구개발팀",
+    "employeeNumber": "EMP-0065",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0067",
+    "employeeName": "민현주",
+    "department": "인사팀",
+    "employeeNumber": "EMP-0067",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0069",
+    "employeeName": "송미숙",
+    "department": "영업팀",
+    "employeeNumber": "EMP-0069",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0071",
+    "employeeName": "김명숙",
+    "department": "IT팀",
+    "employeeNumber": "EMP-0071",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0072",
+    "employeeName": "지순옥",
+    "department": "품질관리팀",
+    "employeeNumber": "EMP-0072",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0074",
+    "employeeName": "송상훈",
+    "department": "생산팀",
+    "employeeNumber": "EMP-0074",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0080",
+    "employeeName": "김도현",
+    "department": "생산팀",
+    "employeeNumber": "EMP-0080",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0081",
+    "employeeName": "최현숙",
+    "department": "생산팀",
+    "employeeNumber": "EMP-0081",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0082",
+    "employeeName": "구현주",
+    "department": "재무팀",
+    "employeeNumber": "EMP-0082",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0084",
+    "employeeName": "이영철",
+    "department": "생산팀",
+    "employeeNumber": "EMP-0084",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0085",
+    "employeeName": "전지혜",
+    "department": "IT팀",
+    "employeeNumber": "EMP-0085",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0086",
+    "employeeName": "장춘자",
+    "department": "영업팀",
+    "employeeNumber": "EMP-0086",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0089",
+    "employeeName": "백승민",
+    "department": "연구개발팀",
+    "employeeNumber": "EMP-0089",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0092",
+    "employeeName": "김진호",
+    "department": "품질관리팀",
+    "employeeNumber": "EMP-0092",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0097",
+    "employeeName": "최영수",
+    "department": "IT팀",
+    "employeeNumber": "EMP-0097",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0098",
+    "employeeName": "이상훈",
+    "department": "재무팀",
+    "employeeNumber": "EMP-0098",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  },
+  {
+    "employeeId": "EMP-0099",
+    "employeeName": "권승현",
+    "department": "영업팀",
+    "employeeNumber": "EMP-0099",
+    "totalDays": 25,
+    "usedDays": 0,
+    "remainingDays": 25,
+    "usedDates": []
+  }
+]

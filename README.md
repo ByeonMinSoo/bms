@@ -1,80 +1,73 @@
-# TS Chatbot - Vercel 배포 가이드
+# 민수Bot - 인사/노무 상담 도우미
 
-## 프로젝트 소개
-민수bot - GPT API를 이용한 웹 챗봇입니다. 회사 직원 정보, 사내 규정, 근로기준법 등에 대한 문의를 처리합니다.
+GPT API를 이용한 웹 챗봇으로, 근로기준법, 사내 규정, 직원 정보에 대한 문의를 처리합니다.
 
-## Vercel 배포 방법
+## 주요 기능
 
-### 1. 사전 준비
-- Vercel 계정이 필요합니다 (https://vercel.com)
-- GitHub/GitLab/Bitbucket에 코드가 업로드되어 있어야 합니다
+- **법령 정보**: 근로기준법 62개 조문 검색 및 설명
+- **직원 정보**: 회사 직원들의 부서, 직급, 연락처 조회
+- **사내 규정**: 출장비, 재택근무, 교육훈련 등 규정 안내
+- **AI 응답**: 구조화된 답변 (질문 요약, 관련 정보, 상세 설명)
 
-### 2. 환경 변수 설정
-Vercel 대시보드에서 다음 환경 변수를 설정하세요:
+## 설치 및 실행
 
-```
-OPENAI_API_KEY=your_openai_api_key_here
-NODE_ENV=production
-```
-
-### 3. 배포 단계
-
-1. **Vercel CLI 설치** (선택사항)
-   ```bash
-   npm i -g vercel
-   ```
-
-2. **프로젝트 연결**
-   - Vercel 대시보드에서 "New Project" 클릭
-   - GitHub 저장소 연결
-   - 프로젝트 설정 확인
-
-3. **자동 배포**
-   - 코드를 GitHub에 푸시하면 자동으로 배포됩니다
-   - 또는 Vercel CLI 사용:
-   ```bash
-   vercel
-   ```
-
-### 4. 로컬 개발
 ```bash
+# 의존성 설치
 npm install
+
+# 개발 서버 실행
 npm run dev
+
+# 프로덕션 빌드
+npm run build
 ```
 
-### 5. 빌드 및 배포
-```bash
-npm run build
-npm run deploy
-```
+## 사용 방법
+
+1. **홈페이지** (`/`): 서비스 소개 및 기능 안내
+2. **채팅 페이지** (`/chat`): 민수Bot과 대화 시작
+3. **질문 예시**:
+   - "연차 유급휴가는 어떻게 계산되나요?"
+   - "김민수 차장의 연락처가 궁금해요"
+   - "출장비 지급 기준은 어떻게 되나요?"
 
 ## 프로젝트 구조
+
 ```
-ts-chatbot/
-├── api/                 # Vercel API 라우트
-│   └── index.ts        # 메인 API 핸들러
-├── src/                # 소스 코드
-│   ├── database/       # 데이터베이스 관련
-│   ├── engines/        # 벡터 엔진
-│   └── utils/          # 유틸리티
-├── public/             # 정적 파일
-├── dataset/            # 데이터셋
-├── vercel.json         # Vercel 설정
-└── package.json        # 프로젝트 설정
+minsu-bot/
+├── src/
+│   ├── server.ts              # Express 서버
+│   └── database/
+│       └── legal-database.ts  # 법령 데이터베이스
+├── public/
+│   ├── index.html             # 채팅 페이지
+│   ├── landing.html           # 랜딩 페이지
+│   └── legal-ui.css          # 스타일시트
+├── package.json               # 프로젝트 설정
+├── tsconfig.json             # TypeScript 설정
+└── vercel.json               # Vercel 배포 설정
 ```
 
-## API 엔드포인트
-- `GET /` - 랜딩 페이지
-- `GET /chat` - 채팅 페이지
-- `POST /api/chat/start` - 새 대화 시작
-- `POST /api/chat/message` - 메시지 전송
+## 환경 변수
+
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+## 배포
+
+- **Vercel**: 자동 배포 지원
+- **로컬**: `npm run dev`로 개발 서버 실행
 
 ## 주의사항
-- OpenAI API 키는 반드시 환경 변수로 설정하세요
-- 대화 세션은 인메모리로 저장되므로 서버 재시작 시 초기화됩니다
-- 프로덕션 환경에서는 데이터베이스 사용을 권장합니다
 
-## 문제 해결
-- 배포 실패 시 Vercel 로그를 확인하세요
-- 환경 변수가 올바르게 설정되었는지 확인하세요
-- API 키가 유효한지 확인하세요 
+이 서비스는 **법률 자문이 아닌 참고용 안내**입니다.
+정확한 해석이나 적용은 고용노동부 또는 공인노무사와 상담하시기 바랍니다.
+
+## 라이선스
+
+MIT License
+
+## 개발자
+
+ByeonMinSoo 

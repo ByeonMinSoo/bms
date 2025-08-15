@@ -9,19 +9,42 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🤖 민수Bot</h1>
+            <div class="connection-status">
+                <div class="status-dot" id="statusDot"></div>
+                <span class="status-text" id="statusText">연결 확인 중...</span>
+            </div>
+            <h1>민수Bot</h1>
             <p>인사/노무 상담 도우미</p>
         </div>
         
         <div class="chat-messages" id="chatMessages">
             <div class="message bot-message">
                 <div class="message-content">
-                    안녕하세요! 인사팀 민수Bot입니다. 👋<br>
+                    안녕하세요! 인사팀 민수Bot입니다.<br>
                     근로기준법, 사내 규정, 직원 정보에 대해 궁금한 점이 있으시면 언제든지 물어보세요!
                 </div>
             </div>
         </div>
-        
+
+        <!-- 샘플 질문 리스트 추가 -->
+        <div class="faq-section" id="faqSection">
+            <h3>샘플 질문</h3>
+            <div class="faq-grid">
+                <div class="faq-item" onclick="askQuestion('김민수님 연차 얼마나 남았어요?')">
+                    <span class="faq-text">연차 현황</span>
+                </div>
+                <div class="faq-item" onclick="askQuestion('김영희 차장 연락처 알려줘')">
+                    <span class="faq-text">직원 검색</span>
+                </div>
+                <div class="faq-item" onclick="askQuestion('근로기준법 제1조가 뭐야?')">
+                    <span class="faq-text">법령 정보</span>
+                </div>
+                <div class="faq-item" onclick="askQuestion('4월 25일에 연차쓸게')">
+                    <span class="faq-text">연차 신청</span>
+                </div>
+            </div>
+        </div>
+
         <div class="chat-input-container">
             <div class="input-wrapper">
                 <input type="text" id="messageInput" placeholder="메시지를 입력하세요..." maxlength="500">
@@ -29,19 +52,29 @@
                     <span>전송</span>
                 </button>
             </div>
+            <!-- 띵킹박스 추가 -->
+            <div class="thinking-box" id="thinkingBox" style="display: none;">
+                <div class="thinking-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <span class="thinking-text">생각 중...</span>
+            </div>
         </div>
     </div>
 
     <script>
-        let sessionId = null;
-        let isLoading = false;
+        let currentSessionId = null;
 
-        // DOM 요소들
-        const chatMessages = document.getElementById('chatMessages');
-        const messageInput = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendButton');
+        // 마크다운을 HTML로 변환하는 함수 추가
+        function markdownToHtml(text) {
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+        }
 
-        // 새 대화 시작
+        // 새 세션 시작
         async function startNewSession() {
             try {
                 const response = await fetch('/api/chat/start', {
@@ -51,9 +84,10 @@
                     }
                 });
                 const data = await response.json();
+                
                 if (data.success) {
-                    sessionId = data.sessionId;
-                    console.log('새 세션 시작:', sessionId);
+                    currentSessionId = data.sessionId;
+                    console.log('새 세션 시작:', currentSessionId);
                 }
             } catch (error) {
                 console.error('세션 시작 실패:', error);
@@ -62,14 +96,24 @@
 
         // 메시지 전송
         async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
             const message = messageInput.value.trim();
-            if (!message || isLoading) return;
+            
+            if (!message) return;
+            
+            if (!currentSessionId) {
+                await startNewSession();
+            }
 
             // 사용자 메시지 표시
             addMessage(message, 'user');
             messageInput.value = '';
-            isLoading = true;
-            sendButton.disabled = true;
+
+            // 샘플 질문 섹션 숨기기
+            hideSampleQuestions();
+
+            // 띵킹박스 표시
+            showThinkingBox();
 
             try {
                 const response = await fetch('/api/chat/message', {
@@ -79,53 +123,143 @@
                     },
                     body: JSON.stringify({
                         message: message,
-                        sessionId: sessionId
+                        sessionId: currentSessionId
                     })
                 });
 
                 const data = await response.json();
                 
                 if (data.success) {
-                    addMessage(data.response, 'bot');
+                    // 마크다운을 HTML로 변환하여 표시
+                    const htmlResponse = markdownToHtml(data.response);
+                    addMessage(htmlResponse, 'bot');
                 } else {
-                    addMessage('죄송합니다. 오류가 발생했습니다.', 'bot');
+                    addMessage('오류가 발생했습니다: ' + data.error, 'bot');
                 }
             } catch (error) {
                 console.error('메시지 전송 실패:', error);
-                addMessage('네트워크 오류가 발생했습니다. 다시 시도해주세요.', 'bot');
+                addMessage('메시지 전송 중 오류가 발생했습니다.', 'bot');
             } finally {
-                isLoading = false;
-                sendButton.disabled = false;
-                messageInput.focus();
+                // 띵킹박스 숨김
+                hideThinkingBox();
             }
         }
 
         // 메시지 추가
         function addMessage(content, sender) {
+            const chatMessages = document.getElementById('chatMessages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}-message`;
             
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'message-content';
-            contentDiv.innerHTML = content.replace(/\n/g, '<br>');
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
             
-            messageDiv.appendChild(contentDiv);
+            if (sender === 'bot') {
+                // 봇 응답은 HTML로 렌더링
+                messageContent.innerHTML = content;
+            } else {
+                // 사용자 메시지는 일반 텍스트
+                messageContent.textContent = content;
+            }
+            
+            messageDiv.appendChild(messageContent);
             chatMessages.appendChild(messageDiv);
-            
-            // 스크롤을 맨 아래로
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // 이벤트 리스너
-        sendButton.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => {
+        // Enter 키 이벤트
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 sendMessage();
             }
         });
 
+        // 전송 버튼 클릭 이벤트
+        document.getElementById('sendButton').addEventListener('click', sendMessage);
+
+        // 자주 묻는 질문 클릭 함수
+        function askQuestion(question) {
+            const messageInput = document.getElementById('messageInput');
+            messageInput.value = question;
+            
+            // 대화방 내부로 스크롤
+            const chatMessages = document.querySelector('.chat-messages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            sendMessage();
+            
+            // 샘플 질문 섹션 숨기기
+            hideSampleQuestions();
+        }
+
+        // 샘플 질문 숨기기 함수
+        function hideSampleQuestions() {
+            const faqSection = document.getElementById('faqSection');
+            if (faqSection) {
+                faqSection.style.display = 'none';
+            }
+        }
+
+        // 띵킹박스 표시/숨김 함수
+        function showThinkingBox() {
+            document.getElementById('thinkingBox').style.display = 'flex';
+        }
+
+        function hideThinkingBox() {
+            document.getElementById('thinkingBox').style.display = 'none';
+        }
+
         // 페이지 로드 시 세션 시작
         window.addEventListener('load', startNewSession);
+
+        // 연결 상태 확인 함수
+        async function checkConnectionStatus() {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            
+            try {
+                const response = await fetch('/api/database/status', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.stats) {
+                        // 연결 성공 - 데이터베이스 상태도 확인
+                        statusDot.className = 'status-dot connected';
+                        statusText.textContent = `연결상태 (${data.stats.totalEmployees}명, ${data.stats.totalAnnualLeaveRecords}개 연차)`;
+                        statusText.className = 'status-text connected';
+                    } else {
+                        // API 응답은 성공했지만 데이터 오류
+                        statusDot.className = 'status-dot warning';
+                        statusText.textContent = '데이터 오류';
+                        statusText.className = 'status-text warning';
+                    }
+                } else {
+                    // 연결 실패
+                    statusDot.className = 'status-dot disconnected';
+                    statusText.textContent = '연결 실패';
+                    statusText.className = 'status-text disconnected';
+                }
+            } catch (error) {
+                // 연결 오류
+                statusDot.className = 'status-dot disconnected';
+                statusText.textContent = '연결 오류';
+                statusText.className = 'status-text disconnected';
+            }
+        }
+
+        // 주기적으로 연결 상태 확인 (30초마다)
+        setInterval(checkConnectionStatus, 30000);
+
+        // 페이지 로드 시 연결 상태 확인
+        window.addEventListener('load', () => {
+            startNewSession();
+            checkConnectionStatus();
+        });
     </script>
 </body>
 </html> 

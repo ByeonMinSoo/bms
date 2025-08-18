@@ -4,7 +4,7 @@ import { simpleVectorDatabase } from '../../src/database/simple-vector-database'
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   try {
     const employees = await simpleVectorDatabase.getAllEmployees();
-    const annualLeave = await simpleVectorDatabase.getAllAnnualLeave?.();
+    const annualLeave = await simpleVectorDatabase.getAllAnnualLeaveRecords();
     return res.status(200).json({
       success: true,
       stats: {

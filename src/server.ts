@@ -35,28 +35,30 @@ const API_KEY = process.env.API_KEY || 'default-secure-key-2024';
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY || 'admin-secure-key-2024';
 
 // API 키 검증 미들웨어
-const validateApiKey = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+const validateApiKey = (req: express.Request, res: express.Response, next: express.NextFunction): void => {
   const apiKey = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');
   
   if (!apiKey || apiKey !== API_KEY) {
-    return res.status(401).json({ 
+    res.status(401).json({ 
       error: '인증 실패', 
       message: '유효한 API 키가 필요합니다.' 
     });
+    return;
   }
   
   next();
 };
 
 // 관리자 권한 검증 미들웨어
-const validateAdminKey = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+const validateAdminKey = (req: express.Request, res: express.Response, next: express.NextFunction): void => {
   const adminKey = req.headers['x-admin-key'] || req.headers['authorization']?.replace('Bearer ', '');
   
   if (!adminKey || adminKey !== ADMIN_API_KEY) {
-    return res.status(403).json({ 
+    res.status(403).json({ 
       error: '권한 없음', 
       message: '관리자 권한이 필요합니다.' 
     });
+    return;
   }
   
   next();
@@ -214,7 +216,7 @@ function analyzeUserIntent(message: string): {
 }
 
 // 추론 분석 함수
-function performInferenceAnalysis(employees: any[], query: string): string {
+function performInferenceAnalysis(employees: any[], _query: string): string {
   try {
     if (employees.length === 0) return '분석할 직원 데이터가 없습니다.';
 
@@ -448,7 +450,7 @@ app.post('/api/chat/message', validateApiKey, async (req, res) => {
 });
 
 // 새 상담 세션 시작
-app.post('/api/chat/start', validateApiKey, (req, res) => {
+app.post('/api/chat/start', validateApiKey, (_req, res) => {
   const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
   conversationSessions[sessionId] = {
@@ -535,7 +537,7 @@ app.get('/api/annual-leave/search', validateApiKey, async (req, res) => {
 });
 
 // 관리자 전용 API - 전체 통계
-app.get('/api/admin/statistics', validateAdminKey, async (req, res) => {
+app.get('/api/admin/statistics', validateAdminKey, async (_req, res) => {
   try {
     const employees = await simpleVectorDatabase.getAllEmployees();
     const totalEmployees = employees.length;
@@ -591,7 +593,7 @@ app.post('/api/feedback', validateApiKey, (req, res) => {
 });
 
 // 서버 상태 확인 API
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (_req, res) => {
   res.json({ 
     status: 'healthy', 
     timestamp: new Date().toISOString(),
@@ -601,7 +603,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // 404 처리
-app.use('*', (req, res) => {
+app.use('*', (_req, res) => {
   res.status(404).json({ 
     error: '페이지를 찾을 수 없습니다.',
     message: '요청하신 API 엔드포인트가 존재하지 않습니다.'
@@ -609,7 +611,7 @@ app.use('*', (req, res) => {
 });
 
 // 전역 에러 핸들러
-app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((error: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('서버 오류:', error);
   res.status(500).json({ 
     error: '내부 서버 오류',

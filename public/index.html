@@ -83,11 +83,15 @@
                         'Content-Type': 'application/json'
                     }
                 });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
                 const data = await response.json();
-                
-                if (data.success) {
+                if (data && data.success) {
                     currentSessionId = data.sessionId;
                     console.log('새 세션 시작:', currentSessionId);
+                } else {
+                    console.error('세션 시작 실패: 잘못된 응답 형식');
                 }
             } catch (error) {
                 console.error('세션 시작 실패:', error);
@@ -126,7 +130,9 @@
                         sessionId: currentSessionId
                     })
                 });
-
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
                 const data = await response.json();
                 
                 if (data.success) {

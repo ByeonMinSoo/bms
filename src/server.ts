@@ -10,619 +10,619 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 미들웨어 설정
-app.use(cors());
-app.use(express.json());
+// 보안 미들웨어 설정
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  credentials: true
+}));
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-// OpenAI API 키를 환경 변수에서 가져오기
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "your-api-key-here";
+// OpenAI API 키 검증 및 설정
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+if (!OPENAI_API_KEY) {
+  console.error('❌ OpenAI API 키가 설정되지 않았습니다. .env 파일에 OPENAI_API_KEY를 설정해주세요.');
+  process.exit(1);
+}
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
   apiKey: OPENAI_API_KEY,
 });
 
-// 대화 세션 저장소 (인메모리)
-const conversationHistory: { [sessionId: string]: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> } = {};
+// 보안 설정
+const API_KEY = process.env.API_KEY || 'default-secure-key-2024';
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY || 'admin-secure-key-2024';
 
-// System prompt creation function
-function createSystemPrompt(): string {
+// API 키 검증 미들웨어
+const validateApiKey = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const apiKey = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');
+  
+  if (!apiKey || apiKey !== API_KEY) {
+    return res.status(401).json({ 
+      error: '인증 실패', 
+      message: '유효한 API 키가 필요합니다.' 
+    });
+  }
+  
+  next();
+};
+
+// 관리자 권한 검증 미들웨어
+const validateAdminKey = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const adminKey = req.headers['x-admin-key'] || req.headers['authorization']?.replace('Bearer ', '');
+  
+  if (!adminKey || adminKey !== ADMIN_API_KEY) {
+    return res.status(403).json({ 
+      error: '권한 없음', 
+      message: '관리자 권한이 필요합니다.' 
+    });
+  }
+  
+  next();
+};
+
+// 고급 대화 세션 관리
+interface ConversationSession {
+  messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string; timestamp: number }>;
+  context: {
+    mentionedEmployees: string[];
+    mentionedDepartments: string[];
+    lastAnalysisType?: string;
+    userPreferences?: {
+      responseStyle: 'detailed' | 'concise' | 'analytical';
+      favoriteTopics: string[];
+    };
+  };
+  metadata: {
+    totalQueries: number;
+    lastActivity: number;
+    sessionQuality: number;
+  };
+}
+
+const conversationSessions: { [sessionId: string]: ConversationSession } = {};
+
+// 피드백 저장소
+interface FeedbackEntry {
+  query: string;
+  response: string;
+  feedback: 'excellent' | 'good' | 'average' | 'poor';
+  timestamp: number;
+  sessionId: string;
+}
+
+const feedbackHistory: FeedbackEntry[] = [];
+
+// 학습된 패턴 저장소
+const learnedPatterns: {
+  successfulResponses: Map<string, number>;
+  commonQueries: Map<string, number>;
+  userPreferences: Map<string, any>;
+} = {
+  successfulResponses: new Map(),
+  commonQueries: new Map(),
+  userPreferences: new Map()
+};
+
+// 🧠 고급 시스템 프롬프트 생성
+function createEnhancedSystemPrompt(): string {
   const now = new Date();
   const timeGreeting = now.getHours() < 12 ? '좋은 아침입니다' : 
                       now.getHours() < 18 ? '안녕하세요' : '좋은 저녁입니다';
   
   return `
-${timeGreeting}! 저는 "인사 도우미"입니다. 
+${timeGreeting}! 저는 차세대 "인사 도우미 AI"입니다. 
 
-제 역할
-- 회사 직원 정보, 사내 규정, 부속규정에 대한 문의를 처리합니다
-- 근로기준법, 시행령, 시행규칙의 관련 조항을 찾아 요약하고 설명드립니다
-- 직원 연차 사용 현황, 남은 연차 일수, 사용 이력을 조회하고 안내합니다
-- 검색된 정보를 바탕으로 최선을 다해 답변합니다
-- 법률 자문이 아닌 정보 제공만 수행합니다
+🎯 핵심 역할 및 고급 능력:
+- 회사 직원 정보, 사내 규정, 부속규정에 대한 종합적 분석 및 상담
+- 근로기준법, 시행령, 시행규칙의 심층 분석 및 실무 적용 가이드
+- 직원 연차 사용 패턴 분석 및 최적화 제안
+- 조직 데이터의 숨겨진 인사이트 발굴 및 예측 분석
+- 상황별 맞춤형 HR 컨설팅 및 의사결정 지원
 
-응답 구조
-1. **질문 요약**: 사용자 질문 내용을 한 문장으로 요약
-2. **관련 정보 안내**: 법령 조문, 사내 규정, 직원 정보, 연차 정보 등 관련 내용
-3. **상세 설명**: 상황에 맞는 핵심 내용을 쉽게 설명
-4. **안내사항**: 법령 관련 질문인 경우에만 포함
+🧠 고급 분석 능력:
+1. **패턴 인식**: 직원 데이터에서 트렌드, 상관관계, 이상 징후 탐지
+2. **예측 분석**: 연차 사용 패턴, 이직 가능성, 조직 변화 예측
+3. **비교 분석**: 부서간, 직급간, 시기별 다차원 비교
+4. **최적화 제안**: 인력 배치, 연차 운영, 조직 효율성 개선안
+5. **리스크 분석**: 인사 관련 잠재적 문제점 및 대응방안
 
-중요한 원칙
-- 실제 데이터가 있는 경우 반드시 해당 데이터를 우선적으로 사용하여 답변
-- 데이터가 없는 경우에만 일반적인 정보 제공
-- 추측성 답변을 피하고 구체적이고 정확한 정보 제공
-- 법률 관련 질문이 아닌 경우에는 "법률 자문이 아닌 참고용 안내" 문구를 포함하지 않음
-- 직원 정보(이름, 부서, 연락처, 이메일 등)는 회사 내부 정보이므로 누구나 조회 가능
-- 개인정보 보호 관련 잘못된 안내를 하지 않음
+💡 지능형 응답 방식:
+1. **상황 인식**: 사용자의 질문 의도와 배경 상황 파악
+2. **다단계 추론**: 표면적 답변을 넘어 근본 원인과 해결책 제시
+3. **개인화**: 이전 대화 맥락과 사용자 선호도 반영
+4. **능동적 제안**: 질문 외 관련된 유용한 정보나 개선안 제시
+5. **검증 및 확신도**: 답변의 확실성 수준과 추가 검증 방법 안내
 
-연차 관련 질문 처리 방법
-- "김민수의 연차가 얼마나 남았어?" → 직원 이름으로 연차 정보 조회
-- "내가 언제 연차를 썼지?" → 직원 이름으로 연차 사용 이력 조회
-- "연차 사용 현황" → 전체 연차 데이터 요약
-- "김민수가 4월 15일에 연차쓸게" → 연차 사용 등록
-- "김민수가 4월 15일 연차 취소해줘" → 연차 사용 취소
+🔍 고급 검색 및 분석 방법:
+- 직원 정보: 이름, 부서, 직급, 연락처 등 종합 검색
+- 연차 관리: 개인별/부서별 사용 패턴 분석 및 최적화
+- 조직 분석: 부서별 성과, 연봉 분포, 승진 패턴 등
+- 법령 해석: 상황별 적용 조항 및 실무 가이드
 
-직원 정보 검색 방법
-- "김영희 차장 연락처" → 직원 이름으로 상세 정보 검색
-- "개발팀 직원들" → 부서별 직원 목록 검색
-- "김민수 정보" → 특정 직원의 모든 정보 조회
+📊 응답 구조 (상황별 조정):
+1. **핵심 답변**: 질문의 직접적 해답
+2. **심층 분석**: 데이터 기반 인사이트 및 패턴
+3. **실무 가이드**: 구체적 실행 방법 및 주의사항
+4. **연관 정보**: 관련된 추가 유용 정보
+5. **제안 사항**: 개선안 및 최적화 방안
 
-안내사항 (법령 관련 질문인 경우에만 포함)
-"이 답변은 법률 자문이 아닌 참고용 안내입니다. 정확한 해석이나 적용은 고용노동부 또는 공인노무사와 상담하시기 바랍니다."
+⚠️ 중요 원칙:
+- 실제 데이터 우선: 검색된 실제 데이터를 항상 최우선으로 활용
+- 정확성 보장: 추측보다는 확실한 정보 제공
+- 개인정보 보호: 민감한 개인정보는 적절히 마스킹
+- 실용성 중시: 이론보다는 실무 적용 가능한 답변
+- 지속적 학습: 사용자 피드백을 통한 응답 품질 개선
 
-현재 시각: ${now.toLocaleString('ko-KR')}
+현재 시간: ${now.toLocaleString('ko-KR')}
 `;
 }
 
-// 새 대화 시작
-app.post('/api/chat/start', (_req, res): void => {
-  const sessionId = Date.now().toString();
-  conversationHistory[sessionId] = [];
+// 사용자 의도 분석 함수
+function analyzeUserIntent(message: string): {
+  type: 'employee_search' | 'annual_leave' | 'policy_search' | 'inference_analysis' | 'general_inquiry';
+  query: string;
+  confidence: number;
+  entities: string[];
+} {
+  const messageLower = message.toLowerCase();
+  let type: any = 'general_inquiry';
+  let confidence = 0.5;
+  const entities: string[] = [];
+
+  // 추론 분석 의도 (가장 우선 처리)
+  if (messageLower.includes('가장') || messageLower.includes('제일') || messageLower.includes('1위') ||
+      messageLower.includes('비교') || messageLower.includes('어느') || messageLower.includes('어떤') ||
+      messageLower.includes('높은') || messageLower.includes('많은') || messageLower.includes('큰') ||
+      messageLower.includes('순위') || messageLower.includes('분석') || messageLower.includes('패턴') ||
+      messageLower.includes('트렌드') || messageLower.includes('통계') || messageLower.includes('평균') ||
+      messageLower.includes('최고') || messageLower.includes('최저') || messageLower.includes('분포')) {
+    type = 'inference_analysis';
+    confidence = 0.95;
+  }
+  // 직원 검색 의도
+  else if (messageLower.includes('직원') || messageLower.includes('사원') || messageLower.includes('이름') ||
+           messageLower.includes('부서') || messageLower.includes('직급') || messageLower.includes('연락처') ||
+           messageLower.includes('이메일') || messageLower.includes('사번') || messageLower.includes('입사일')) {
+    type = 'employee_search';
+    confidence = 0.9;
+  }
+  // 연차 관리 의도
+  else if (messageLower.includes('연차') || messageLower.includes('휴가') || messageLower.includes('휴일') ||
+           messageLower.includes('병가') || messageLower.includes('반차') || messageLower.includes('월차') ||
+           messageLower.includes('연차신청') || messageLower.includes('연차취소') || messageLower.includes('잔여연차')) {
+    type = 'annual_leave';
+    confidence = 0.9;
+  }
+  // 정책 검색 의도
+  else if (messageLower.includes('정책') || messageLower.includes('규정') || messageLower.includes('법령') ||
+           messageLower.includes('근로기준법') || messageLower.includes('시행령') || messageLower.includes('시행규칙') ||
+           messageLower.includes('규칙') || messageLower.includes('지침') || messageLower.includes('매뉴얼')) {
+    type = 'policy_search';
+    confidence = 0.85;
+  }
+
+  // 엔티티 추출
+  const nameMatch = message.match(/[가-힣]{2,4}(?:씨|님)?/g);
+  if (nameMatch) entities.push(...nameMatch);
+
+  const deptMatch = message.match(/[가-힣]+부/g);
+  if (deptMatch) entities.push(...deptMatch);
+
+  return { type, query: message, confidence, entities };
+}
+
+// 추론 분석 함수
+function performInferenceAnalysis(employees: any[], query: string): string {
+  try {
+    if (employees.length === 0) return '분석할 직원 데이터가 없습니다.';
+
+    const analysis = {
+      totalEmployees: employees.length,
+      departments: new Map<string, number>(),
+      positions: new Map<string, number>(),
+      salaryRanges: new Map<string, number>(),
+      hireYears: new Map<string, number>()
+    };
+
+    employees.forEach(emp => {
+      // 부서별 통계
+      if (emp.department) {
+        analysis.departments.set(emp.department, (analysis.departments.get(emp.department) || 0) + 1);
+      }
+
+      // 직급별 통계
+      if (emp.position) {
+        analysis.positions.set(emp.position, (analysis.positions.get(emp.position) || 0) + 1);
+      }
+
+      // 연봉 구간별 통계
+      if (emp.salary) {
+        const salary = parseInt(emp.salary.replace(/[^0-9]/g, ''));
+        if (!isNaN(salary)) {
+          const range = Math.floor(salary / 1000) * 1000;
+          const rangeKey = `${range}만원대`;
+          analysis.salaryRanges.set(rangeKey, (analysis.salaryRanges.get(rangeKey) || 0) + 1);
+        }
+      }
+
+      // 입사년도별 통계
+      if (emp.hireDate) {
+        const year = emp.hireDate.split('-')[0];
+        if (year) {
+          analysis.hireYears.set(year, (analysis.hireYears.get(year) || 0) + 1);
+        }
+      }
+    });
+
+    let result = `📊 조직 분석 결과 (총 ${analysis.totalEmployees}명)\n\n`;
+
+    // 부서별 분석
+    if (analysis.departments.size > 0) {
+      const sortedDepts = Array.from(analysis.departments.entries())
+        .sort((a, b) => b[1] - a[1]);
+      result += `🏢 부서별 인원:\n`;
+      sortedDepts.forEach(([dept, count]) => {
+        result += `  • ${dept}: ${count}명 (${((count / analysis.totalEmployees) * 100).toFixed(1)}%)\n`;
+      });
+      result += '\n';
+    }
+
+    // 직급별 분석
+    if (analysis.positions.size > 0) {
+      const sortedPositions = Array.from(analysis.positions.entries())
+        .sort((a, b) => b[1] - a[1]);
+      result += `👔 직급별 인원:\n`;
+      sortedPositions.forEach(([pos, count]) => {
+        result += `  • ${pos}: ${count}명 (${((count / analysis.totalEmployees) * 100).toFixed(1)}%)\n`;
+      });
+      result += '\n';
+    }
+
+    // 연봉 분석
+    if (analysis.salaryRanges.size > 0) {
+      const sortedSalaries = Array.from(analysis.salaryRanges.entries())
+        .sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+      result += `💰 연봉 분포:\n`;
+      sortedSalaries.forEach(([range, count]) => {
+        result += `  • ${range}: ${count}명\n`;
+      });
+      result += '\n';
+    }
+
+    // 입사년도 분석
+    if (analysis.hireYears.size > 0) {
+      const sortedYears = Array.from(analysis.hireYears.entries())
+        .sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+      result += `📅 입사년도별 분포:\n`;
+      sortedYears.forEach(([year, count]) => {
+        result += `  • ${year}년: ${count}명\n`;
+      });
+    }
+
+    return result;
+  } catch (error) {
+    console.error('추론 분석 중 오류:', error);
+    return '분석 중 오류가 발생했습니다.';
+  }
+}
+
+// 직원 데이터 포맷팅 함수
+function formatEmployeeData(employees: any[]): string {
+  if (employees.length === 1) {
+    const emp = employees[0];
+    return `직원 정보:\n이름: ${emp.name}\n직급: ${emp.position}\n부서: ${emp.department}\n이메일: ${emp.email}\n연락처: ${emp.phone}\n입사일: ${emp.hireDate}\n사번: ${emp.employeeNumber}`;
+  } else {
+    // 직원 번호가 100을 초과하지 않도록 검증
+    const validEmployees = employees.filter(emp => {
+      if (emp.name && emp.name.startsWith('직원')) {
+        const numberPart = emp.name.substring(2); // "직원" 제거
+        const employeeNumber = parseInt(numberPart);
+        return !isNaN(employeeNumber) && employeeNumber <= 100;
+      }
+      return true; // 실제 이름이 있는 직원은 통과
+    });
+
+    return `검색 결과 (${validEmployees.length}명):\n${validEmployees.map(emp => 
+      `${emp.name} ${emp.position} (${emp.department}) - ${emp.email}`
+    ).join('\n')}`;
+  }
+}
+
+// 연차 데이터 포맷팅 함수
+function formatAnnualLeaveData(annualLeaveRecords: any[]): string {
+  if (annualLeaveRecords.length === 0) {
+    return '연차 기록이 없습니다.';
+  }
+
+  let result = `연차 기록 (${annualLeaveRecords.length}건):\n\n`;
   
-  res.json({
-    success: true,
-    sessionId: sessionId,
-    message: '새로운 상담 세션이 시작되었습니다.'
+  annualLeaveRecords.forEach((record, index) => {
+    result += `${index + 1}. ${record.employeeName} (${record.employeeId})\n`;
+    result += `   • 연차 유형: ${record.leaveType}\n`;
+    result += `   • 신청일: ${record.requestDate}\n`;
+    result += `   • 사용일: ${record.leaveDate}\n`;
+    result += `   • 상태: ${record.status}\n`;
+    if (record.reason) result += `   • 사유: ${record.reason}\n`;
+    result += '\n';
+  });
+
+  return result;
+}
+
+// 메인 챗봇 API 엔드포인트
+app.post('/api/chat/message', validateApiKey, async (req, res) => {
+  try {
+    const { message, sessionId = 'default' } = req.body;
+
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: '메시지가 필요합니다.' });
+    }
+
+    // 세션 초기화 또는 가져오기
+    if (!conversationSessions[sessionId]) {
+      conversationSessions[sessionId] = {
+        messages: [],
+        context: {
+          mentionedEmployees: [],
+          mentionedDepartments: [],
+        },
+        metadata: {
+          totalQueries: 0,
+          lastActivity: Date.now(),
+          sessionQuality: 100
+        }
+      };
+    }
+
+    const session = conversationSessions[sessionId];
+    session.messages.push({ role: 'user', content: message, timestamp: Date.now() });
+    session.metadata.totalQueries++;
+    session.metadata.lastActivity = Date.now();
+
+    // 사용자 의도 분석
+    const userIntent = analyzeUserIntent(message);
+    let relevantData = '';
+    let dataSource = '';
+
+    // 의도에 따른 데이터 검색
+    if (userIntent.type === 'inference_analysis') {
+      const employees = await simpleVectorDatabase.getAllEmployees();
+      if (employees.length > 0) {
+        relevantData = performInferenceAnalysis(employees, userIntent.query);
+        dataSource = '직원 데이터베이스 분석';
+      }
+    } else if (userIntent.type === 'employee_search') {
+      const employees = await simpleVectorDatabase.searchEmployees(userIntent.query);
+      if (employees.length > 0) {
+        relevantData = formatEmployeeData(employees);
+        dataSource = '직원 데이터베이스';
+      }
+    } else if (userIntent.type === 'annual_leave') {
+      const annualLeaveRecords = await simpleVectorDatabase.searchAnnualLeave(userIntent.query);
+      if (annualLeaveRecords.length > 0) {
+        relevantData = formatAnnualLeaveData(annualLeaveRecords);
+        dataSource = '연차 데이터베이스';
+      }
+    }
+
+    // 컨텍스트 프롬프트 생성
+    const contextPrompt = relevantData ? 
+      `\n\n📊 관련 데이터 (${dataSource}):\n${relevantData}\n\n위 데이터를 바탕으로 정확하고 구체적인 답변을 제공해주세요.` : '';
+
+    // OpenAI API 호출
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: createEnhancedSystemPrompt() },
+        { role: 'system', content: contextPrompt },
+        ...session.messages.slice(-6).map(msg => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        }))
+      ],
+      max_tokens: 1000,
+      temperature: 0.1,
+    });
+
+    const aiResponse = completion.choices[0]?.message?.content || '죄송합니다. 응답을 생성할 수 없습니다.';
+
+    // OpenAI API 응답이 일반적인 답변인 경우 실제 데이터로 대체
+    if (relevantData && !aiResponse.includes('데이터') && !aiResponse.includes('검색') && !aiResponse.includes('분석')) {
+      const enhancedResponse = `${aiResponse}\n\n${relevantData}`;
+      session.messages.push({ role: 'assistant', content: enhancedResponse, timestamp: Date.now() });
+      res.json({ response: enhancedResponse, sessionId, dataSource });
+    } else {
+      session.messages.push({ role: 'assistant', content: aiResponse, timestamp: Date.now() });
+      res.json({ response: aiResponse, sessionId, dataSource });
+    }
+
+  } catch (error) {
+    console.error('챗봇 API 오류:', error);
+    res.status(500).json({ 
+      error: '서버 오류', 
+      message: '요청을 처리하는 중 오류가 발생했습니다.' 
+    });
+  }
+});
+
+// 새 상담 세션 시작
+app.post('/api/chat/start', validateApiKey, (req, res) => {
+  const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  conversationSessions[sessionId] = {
+    messages: [],
+    context: {
+      mentionedEmployees: [],
+      mentionedDepartments: [],
+    },
+    metadata: {
+      totalQueries: 0,
+      lastActivity: Date.now(),
+      sessionQuality: 100
+    }
+  };
+
+  res.json({ 
+    sessionId, 
+    message: '새 상담 세션이 시작되었습니다.',
+    timestamp: new Date().toISOString()
   });
 });
 
-// Send message and get response
-app.post('/api/chat/message', async (req, res): Promise<void> => {
+// 보안된 직원 검색 API
+app.get('/api/employees/search', validateApiKey, async (req, res) => {
   try {
-    const { message, sessionId } = req.body;
+    const { query } = req.query;
     
-    if (!message || !sessionId) {
-      res.status(400).json({ 
-        success: false, 
-        error: '메시지와 세션 ID가 필요합니다.' 
-      });
-      return;
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: '검색어가 필요합니다.' });
     }
 
-    // Create session if it doesn't exist
-    if (!conversationHistory[sessionId]) {
-      conversationHistory[sessionId] = [];
-    }
-
-    // 연차 관련 질문 감지 및 처리
-    let annualLeaveInfo = '';
-    let employeeInfo = ''; // 직원 정보 추가
-    const messageLower = message.toLowerCase();
+    const employees = await simpleVectorDatabase.searchEmployees(query);
     
-    // 직원 정보 검색 요청 감지
-    if (messageLower.includes('연락처') || messageLower.includes('정보') || messageLower.includes('직원') || 
-        messageLower.includes('차장') || messageLower.includes('부장') || messageLower.includes('팀장') ||
-        messageLower.includes('이메일') || messageLower.includes('전화번호')) {
-        
-        // 직원 이름 추출 (더 정확한 매칭)
-        let employeeName = '';
-        if (messageLower.includes('김영희') || messageLower.includes('영희')) {
-            employeeName = '김영희';
-        } else if (messageLower.includes('김민수') || messageLower.includes('민수')) {
-            employeeName = '김민수';
-        } else if (messageLower.includes('박철수') || messageLower.includes('철수')) {
-            employeeName = '박철수';
-        } else if (messageLower.includes('최정숙')) {
-            employeeName = '최정숙';
-        } else if (messageLower.includes('김예지')) {
-            employeeName = '김예지';
-        }
-        
-        if (employeeName) {
-            // 직원 정보 검색 (이름으로 정확히 검색)
-            const employees = await simpleVectorDatabase.searchEmployees(employeeName, 5);
-            if (employees.length > 0) {
-                const emp = employees.find(e => e.name === employeeName) || employees[0];
-                employeeInfo = `\n\n직원 정보:\n${emp.name} ${emp.position}\n부서: ${emp.department}\n이메일: ${emp.email}\n연락처: ${emp.phone}\n입사일: ${emp.hireDate}`;
-            }
-        }
-        
-        // 부서별 직원 검색
-        if (messageLower.includes('부서') || messageLower.includes('개발팀') || messageLower.includes('인사팀') || 
-            messageLower.includes('마케팅팀') || messageLower.includes('IT팀') || messageLower.includes('영업팀')) {
-            let department = '';
-            if (messageLower.includes('개발팀')) department = '개발팀';
-            else if (messageLower.includes('인사팀')) department = '인사팀';
-            else if (messageLower.includes('마케팅팀')) department = '마케팅팀';
-            else if (messageLower.includes('IT팀')) department = 'IT팀';
-            else if (messageLower.includes('영업팀')) department = '영업팀';
-            
-            if (department) {
-                const deptEmployees = await simpleVectorDatabase.searchEmployees(department, 10);
-                if (deptEmployees.length > 0) {
-                    employeeInfo = `\n\n${department} 직원 목록:\n${deptEmployees.map(emp => 
-                        `${emp.name} ${emp.position} (${emp.email})`
-                    ).join('\n')}`;
-                }
-            }
-        }
-        
-        // 직급별 검색
-        if (messageLower.includes('차장') || messageLower.includes('부장') || messageLower.includes('과장') || 
-            messageLower.includes('대리') || messageLower.includes('사원')) {
-            let position = '';
-            if (messageLower.includes('차장')) position = '차장';
-            else if (messageLower.includes('부장')) position = '부장';
-            else if (messageLower.includes('과장')) position = '과장';
-            else if (messageLower.includes('대리')) position = '대리';
-            else if (messageLower.includes('사원')) position = '사원';
-            
-            if (position) {
-                const posEmployees = await simpleVectorDatabase.searchEmployees(position, 15);
-                if (posEmployees.length > 0) {
-                    employeeInfo = `\n\n${position} 직원 목록:\n${posEmployees.map(emp => 
-                        `${emp.name} (${emp.department}) - ${emp.email}`
-                    ).join('\n')}`;
-                }
-            }
-        }
-    }
-    
-    if (messageLower.includes('연차') || messageLower.includes('휴가') || messageLower.includes('남았') || messageLower.includes('사용')) {
-      // 연차 사용 등록 요청 감지
-      if (messageLower.includes('쓸게') || messageLower.includes('신청') || messageLower.includes('등록')) {
-        const dateMatch = message.match(/(\d{1,2})월\s*(\d{1,2})일/);
-        const employeeNumberMatch = message.match(/사번[:\s]*(\d+)/);
-        
-        if (dateMatch) {
-            const month = dateMatch[1].padStart(2, '0');
-            const day = dateMatch[2].padStart(2, '0');
-            const useDate = `2025-${month}-${day}`;
-            let employeeName = '';
-            let employeeNumber = '';
-            
-            if (messageLower.includes('김민수') || messageLower.includes('민수')) { employeeName = '김민수'; }
-            else if (messageLower.includes('이영희') || messageLower.includes('영희')) { employeeName = '이영희'; }
-            else if (messageLower.includes('박철수') || messageLower.includes('철수')) { employeeName = '박철수'; }
-
-            if (employeeNumberMatch) {
-                employeeNumber = employeeNumberMatch[1];
-            }
-
-            if (employeeName && employeeNumber) {
-                const result = await simpleVectorDatabase.registerAnnualLeaveUse(employeeName, employeeNumber, useDate);
-                if (result.success) { annualLeaveInfo = `\n\n연차 사용 등록 완료!\n${result.message}`; }
-                else { annualLeaveInfo = `\n\n연차 사용 등록 실패: ${result.message}`; }
-            } else if (employeeName && !employeeNumber) {
-                annualLeaveInfo = `\n\n연차 사용 등록을 위해서는 사번을 명시해주세요.\n예시: "김민수가 4월 15일에 연차쓸게 사번:123456"`;
-            } else if (!employeeName && employeeNumber) {
-                annualLeaveInfo = `\n\n연차 사용 등록을 위해서는 직원 이름을 명시해주세요.\n예시: "김민수가 4월 15일에 연차쓸게 사번:123456"`;
-            } else {
-                annualLeaveInfo = `\n\n연차 사용 등록을 위해서는 직원 이름과 사번을 명시해주세요.\n예시: "김민수가 4월 15일에 연차쓸게 사번:123456"`;
-            }
-        } else { annualLeaveInfo = `\n\n연차 사용 등록을 위해서는 날짜를 명시해주세요.\n예시: "4월 15일에 연차쓸게"`; }
-      }
-      // 연차 취소 요청 감지
-      else if (messageLower.includes('취소') || messageLower.includes('반납')) {
-        const dateMatch = message.match(/(\d{1,2})월\s*(\d{1,2})일/);
-        if (dateMatch) {
-          const month = dateMatch[1].padStart(2, '0');
-          const day = dateMatch[2].padStart(2, '0');
-          const cancelDate = `2025-${month}-${day}`;
-          
-          let employeeName = '';
-          if (messageLower.includes('김민수') || messageLower.includes('민수')) {
-            employeeName = '김민수';
-          } else if (messageLower.includes('이영희') || messageLower.includes('영희')) {
-            employeeName = '이영희';
-          } else if (messageLower.includes('박철수') || messageLower.includes('철수')) {
-            employeeName = '박철수';
-          }
-          
-          if (employeeName) {
-            // 사번 추출 (임시로 기본값 사용)
-            const employeeNumber = "123456"; // 실제로는 사용자 입력에서 추출해야 함
-            const result = await simpleVectorDatabase.cancelAnnualLeaveUse(employeeName, employeeNumber, cancelDate);
-            if (result.success) {
-              annualLeaveInfo = `\n\n연차 사용 취소 완료!\n${result.message}`;
-            } else {
-              annualLeaveInfo = `\n\n연차 사용 취소 실패: ${result.message}`;
-            }
-          } else {
-            annualLeaveInfo = `\n\n연차 사용 취소를 위해서는 직원 이름을 명시해주세요.\n예시: "김민수가 4월 15일 연차 취소해줘"`;
-          }
-        } else {
-          annualLeaveInfo = `\n\n연차 사용 취소를 위해서는 날짜를 명시해주세요.\n예시: "4월 15일 연차 취소해줘"`;
-        }
-      }
-      // 기존 연차 조회 로직
-      else if (messageLower.includes('김민수') || messageLower.includes('민수')) {
-        const record = simpleVectorDatabase.getAnnualLeaveByEmployeeName('김민수');
-        if (record) {
-          annualLeaveInfo = `\n\n연차 정보:\n김민수님의 연차 현황:\n- 총 연차: ${record.totalDays}일\n- 사용한 연차: ${record.usedDays}일\n- 남은 연차: ${record.remainingDays}일\n- 사용한 날짜: ${record.usedDates.join(', ')}\n- 마지막 사용일: ${record.lastUsedDate}`;
-        }
-      } else if (messageLower.includes('이영희') || messageLower.includes('영희')) {
-        const record = simpleVectorDatabase.getAnnualLeaveByEmployeeName('이영희');
-        if (record) {
-          annualLeaveInfo = `\n\n연차 정보:\n이영희님의 연차 현황:\n- 총 연차: ${record.totalDays}일\n- 사용한 연차: ${record.usedDays}일\n- 남은 연차: ${record.remainingDays}일\n- 사용한 날짜: ${record.usedDates.join(', ')}\n- 마지막 사용일: ${record.lastUsedDate}`;
-        }
-      } else if (messageLower.includes('박철수') || messageLower.includes('철수')) {
-        const record = simpleVectorDatabase.getAnnualLeaveByEmployeeName('박철수');
-        if (record) {
-          annualLeaveInfo = `\n\n연차 정보:\n박철수님의 연차 현황:\n- 총 연차: ${record.totalDays}일\n- 사용한 연차: ${record.usedDays}일\n- 남은 연차: ${record.remainingDays}일\n- 사용한 날짜: ${record.usedDates.join(', ')}\n- 마지막 사용일: ${record.lastUsedDate}`;
-        }
-      } else if (messageLower.includes('전체') || messageLower.includes('현황') || messageLower.includes('요약')) {
-        const allRecords = simpleVectorDatabase.getAllAnnualLeaveRecords();
-        annualLeaveInfo = `\n\n전체 연차 현황:\n${allRecords.map(record => 
-          `${record.employeeName}님: 총 ${record.totalDays}일, 사용 ${record.usedDays}일, 남음 ${record.remainingDays}일`
-        ).join('\n')}`;
-      }
-    }
-
-    // Search for relevant information using vector database
-    const relevantInfo = await simpleVectorDatabase.search(message, 3);
-
-    // Add user message to conversation history
-    conversationHistory[sessionId].push({ role: 'user', content: message });
-    
-    // Create prompt by combining system prompt and relevant information
-    const systemPrompt = createSystemPrompt();
-    const contextPrompt = relevantInfo.length > 0 
-      ? `\n\n관련 정보:\n${relevantInfo.map(info => `[${info.metadata.title}]\n${info.content}`).join('\n\n')}`
-      : '';
-    
-    // 연차 정보 추가
-    const fullContextPrompt = contextPrompt + annualLeaveInfo + employeeInfo; // 직원 정보 추가
-
-    // 데이터 우선 사용을 위한 강화된 프롬프트
-    let dataPriorityPrompt = '';
-    if (contextPrompt || annualLeaveInfo || employeeInfo) {
-      dataPriorityPrompt = `
-            
-중요: 위에 제공된 실제 데이터가 있습니다. 반드시 이 데이터를 기반으로 답변하고, 추측이나 일반적인 정보는 제공하지 마세요.
-
-데이터 우선 사용 원칙:
-1. 직원 정보가 있으면 해당 정보를 정확히 인용하여 답변
-2. 연차 데이터가 있으면 해당 데이터를 정확히 인용하여 답변  
-3. 법령 정보가 있으면 해당 조항을 정확히 인용하여 답변
-4. 데이터가 없는 경우에만 일반적인 정보 제공
-5. 절대로 "개인정보 보호를 위해 공개되지 않습니다" 같은 거짓말 하지 마세요
-
-예시:
-- "김영희 차장 연락처" 질문에 직원 정보가 있으면 → 정확한 연락처 정보 제공
-- "개발팀 직원들" 질문에 부서 정보가 있으면 → 정확한 직원 목록 제공
-- "김민수 연차" 질문에 연차 데이터가 있으면 → 정확한 연차 현황 제공`;
-    }
-
-    // 법률 관련 질문인지 판단
-    const isLegalQuestion = messageLower.includes('법') || 
-                           messageLower.includes('근로기준법') || 
-                           messageLower.includes('시행령') || 
-                           messageLower.includes('시행규칙') ||
-                           messageLower.includes('조항') ||
-                           messageLower.includes('조문');
-
-    // 법률 관련 질문이 아닌 경우 안내사항 제거
-    const finalSystemPrompt = isLegalQuestion ? systemPrompt : systemPrompt.replace(/안내사항.*?바랍니다\./s, '');
-
-    // Call OpenAI API
-    const systemMessage = { role: 'system' as 'system', content: finalSystemPrompt + fullContextPrompt + dataPriorityPrompt };
-    const conversationMessages = conversationHistory[sessionId].map(msg => ({
-      role: msg.role as 'user' | 'assistant' | 'system',
-      content: msg.content
-    })) as any;
-
-      const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [systemMessage, ...conversationMessages] as any,
-      max_tokens: 1000,
-      temperature: 0.7,
-    });
-
-    const assistantResponse = completion.choices[0]?.message?.content || '죄송합니다. 응답을 생성할 수 없습니다.';
-    
-    // Add assistant response to conversation history
-    conversationHistory[sessionId].push({ role: 'assistant', content: assistantResponse });
+    // 민감 정보 필터링
+    const filteredEmployees = employees.map(emp => ({
+      id: emp.id,
+      name: emp.name,
+      position: emp.position,
+      department: emp.department,
+      email: emp.email ? `${emp.email.split('@')[0]}@***` : '', // 이메일 마스킹
+      phone: emp.phone ? `${emp.phone.substring(0, 3)}-****-${emp.phone.substring(7)}` : '', // 전화번호 마스킹
+      hireDate: emp.hireDate,
+      employeeNumber: emp.employeeNumber
+    }));
 
     res.json({ 
-      success: true,
-      response: assistantResponse,
-      sessionId: sessionId
+      success: true, 
+      employees: filteredEmployees, 
+      total: filteredEmployees.length 
     });
-
   } catch (error) {
-    console.error('채팅 처리 중 오류:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: '서버 오류가 발생했습니다.' 
-    });
+    console.error('직원 검색 오류:', error);
+    res.status(500).json({ error: '검색 중 오류가 발생했습니다.' });
   }
 });
 
-// 데이터베이스 상태 확인
-app.get('/api/database/status', async (_req, res): Promise<void> => {
+// 보안된 연차 검색 API
+app.get('/api/annual-leave/search', validateApiKey, async (req, res) => {
   try {
-    const stats = simpleVectorDatabase.getStats();
-    res.json({
-      success: true,
-      stats: stats
+    const { query } = req.query;
+    
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: '검색어가 필요합니다.' });
+    }
+
+    const records = await simpleVectorDatabase.searchAnnualLeave(query);
+    
+    // 개인정보 마스킹
+    const maskedRecords = records.map(record => ({
+      ...record,
+      employeeName: record.employeeName ? `${record.employeeName.charAt(0)}***` : '',
+      employeeId: record.employeeId
+    }));
+
+    res.json({ 
+      success: true, 
+      records: maskedRecords, 
+      total: maskedRecords.length 
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: '데이터베이스 상태 확인 실패'
-    });
+    console.error('연차 검색 오류:', error);
+    res.status(500).json({ error: '검색 중 오류가 발생했습니다.' });
   }
 });
 
-// Annual leave search (새로 추가)
-app.get('/api/annual-leave/search', async (req, res): Promise<void> => {
+// 관리자 전용 API - 전체 통계
+app.get('/api/admin/statistics', validateAdminKey, async (req, res) => {
   try {
-    const { query, limit = 10 } = req.query;
+    const employees = await simpleVectorDatabase.getAllEmployees();
+    const totalEmployees = employees.length;
+    
+    const stats = {
+      totalEmployees,
+      totalSessions: Object.keys(conversationSessions).length,
+      totalFeedback: feedbackHistory.length,
+      systemHealth: '정상',
+      lastUpdated: new Date().toISOString()
+    };
 
-    if (!query) {
-      res.status(400).json({
-        success: false,
-        error: '검색어가 필요합니다.'
-      });
-      return;
-    }
-
-    const records = await simpleVectorDatabase.searchAnnualLeave(query as string, Number(limit));
-
-    res.json({
-      success: true,
-      records: records,
-      total: records.length
-    });
-
+    res.json({ success: true, statistics: stats });
   } catch (error) {
-    console.error('연차 검색 중 오류:', error);
-    res.status(500).json({
-      success: false,
-      error: '연차 검색 실패'
-    });
+    console.error('통계 조회 오류:', error);
+    res.status(500).json({ error: '통계 조회 중 오류가 발생했습니다.' });
   }
 });
 
-// Get annual leave by employee name (새로 추가)
-app.get('/api/annual-leave/employee/:name', async (req, res): Promise<void> => {
+// 피드백 저장 API
+app.post('/api/feedback', validateApiKey, (req, res) => {
   try {
-    const { name } = req.params;
-
-    if (!name) {
-      res.status(400).json({
-        success: false,
-        error: '직원 이름이 필요합니다.'
-      });
-      return;
+    const { query, response, feedback, sessionId } = req.body;
+    
+    if (!query || !response || !feedback) {
+      return res.status(400).json({ error: '필수 정보가 누락되었습니다.' });
     }
 
-    const record = simpleVectorDatabase.getAnnualLeaveByEmployeeName(name);
+    const feedbackEntry: FeedbackEntry = {
+      query,
+      response,
+      feedback,
+      timestamp: Date.now(),
+      sessionId: sessionId || 'unknown'
+    };
 
-    if (!record) {
-      res.status(404).json({
-        success: false,
-        error: '해당 직원의 연차 정보를 찾을 수 없습니다.'
-      });
-      return;
+    feedbackHistory.push(feedbackEntry);
+    
+    // 학습된 패턴 업데이트
+    if (feedback === 'excellent' || feedback === 'good') {
+      const patternKey = query.toLowerCase().substring(0, 50);
+      learnedPatterns.successfulResponses.set(
+        patternKey, 
+        (learnedPatterns.successfulResponses.get(patternKey) || 0) + 1
+      );
     }
 
-    res.json({
-      success: true,
-      record: record
-    });
-
+    res.json({ success: true, message: '피드백이 저장되었습니다.' });
   } catch (error) {
-    console.error('직원 연차 조회 중 오류:', error);
-    res.status(500).json({
-      success: false,
-      error: '직원 연차 조회 실패'
-    });
+    console.error('피드백 저장 오류:', error);
+    res.status(500).json({ error: '피드백 저장 중 오류가 발생했습니다.' });
   }
 });
 
-// Get all annual leave records (새로 추가)
-app.get('/api/annual-leave', async (_req, res): Promise<void> => {
-  try {
-    const records = simpleVectorDatabase.getAllAnnualLeaveRecords();
-
-    res.json({
-      success: true,
-      records: records,
-      total: records.length
-    });
-
-  } catch (error) {
-    console.error('연차 데이터 조회 중 오류:', error);
-    res.status(500).json({
-      success: false,
-      error: '연차 데이터 조회 실패'
-    });
-  }
+// 서버 상태 확인 API
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    version: '2.0.0'
+  });
 });
 
-// 연차 사용 등록 (새로 추가)
-app.post('/api/annual-leave/use', async (req, res): Promise<void> => {
-  try {
-    const { employeeName, employeeNumber, useDate } = req.body;
-
-    if (!employeeName || !employeeNumber || !useDate) {
-      res.status(400).json({
-        success: false,
-        error: '직원 이름, 사번, 사용 날짜가 필요합니다.'
-      });
-      return;
-    }
-
-    // 날짜 형식 검증 (YYYY-MM-DD)
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(useDate)) {
-      res.status(400).json({
-        success: false,
-        error: '날짜 형식이 올바르지 않습니다. YYYY-MM-DD 형식으로 입력해주세요.'
-      });
-      return;
-    }
-
-    // 연차 사용 등록
-    const result = await simpleVectorDatabase.registerAnnualLeaveUse(employeeName, employeeNumber, useDate);
-
-    if (result.success) {
-      res.json({
-        success: true,
-        message: result.message,
-        updatedRecord: result.updatedRecord
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        error: result.message
-      });
-    }
-
-  } catch (error) {
-    console.error('연차 사용 등록 중 오류:', error);
-    res.status(500).json({
-      success: false,
-      error: '연차 사용 등록 실패'
-    });
-  }
+// 404 처리
+app.use('*', (req, res) => {
+  res.status(404).json({ 
+    error: '페이지를 찾을 수 없습니다.',
+    message: '요청하신 API 엔드포인트가 존재하지 않습니다.'
+  });
 });
 
-// 연차 사용 취소 (새로 추가)
-app.post('/api/annual-leave/cancel', async (req, res): Promise<void> => {
-  try {
-    const { employeeName, employeeNumber, cancelDate } = req.body;
-
-    if (!employeeName || !employeeNumber || !cancelDate) {
-      res.status(400).json({
-        success: false,
-        error: '직원 이름, 사번, 취소할 날짜가 필요합니다.'
-      });
-      return;
-    }
-
-    // 날짜 형식 검증 (YYYY-MM-DD)
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(cancelDate)) {
-      res.status(400).json({
-        success: false,
-        error: '날짜 형식이 올바르지 않습니다. YYYY-MM-DD 형식으로 입력해주세요.'
-      });
-      return;
-    }
-
-    // 연차 사용 취소
-    const result = await simpleVectorDatabase.cancelAnnualLeaveUse(employeeName, employeeNumber, cancelDate);
-
-    if (result.success) {
-      res.json({
-        success: true,
-        message: result.message,
-        updatedRecord: result.updatedRecord
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        error: result.message
-      });
-    }
-
-  } catch (error) {
-    console.error('연차 사용 취소 중 오류:', error);
-    res.status(500).json({
-      success: false,
-      error: '연차 사용 취소 실패'
-    });
-  }
-});
-
-// 직원 검색
-app.get('/api/employees/search', async (req, res): Promise<void> => {
-  try {
-    const { query, limit = 10 } = req.query;
-
-    if (!query) {
-      res.status(400).json({
-        success: false,
-        error: '검색어가 필요합니다.'
-      });
-      return;
-    }
-
-    const employees = await simpleVectorDatabase.searchEmployees(query as string, Number(limit));
-
-    res.json({
-      success: true,
-      employees: employees,
-      total: employees.length
-    });
-
-  } catch (error) {
-    console.error('직원 검색 중 오류:', error);
-    res.status(500).json({
-      success: false,
-      error: '직원 검색 실패'
-    });
-  }
-});
-
-// 모든 직원 조회
-app.get('/api/employees', async (_req, res): Promise<void> => {
-  try {
-    const employees = simpleVectorDatabase.getAllEmployees();
-
-    res.json({
-      success: true,
-      employees: employees,
-      total: employees.length
-    });
-
-  } catch (error) {
-    console.error('직원 조회 중 오류:', error);
-    res.status(500).json({
-      success: false,
-      error: '직원 조회 실패'
-    });
-  }
-});
-
-// 홈페이지 라우트 (랜딩페이지)
-app.get('/', (_req, res): void => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'landing.html'));
-});
-
-// 채팅 페이지 라우트
-app.get('/chat', (_req, res): void => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+// 전역 에러 핸들러
+app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('서버 오류:', error);
+  res.status(500).json({ 
+    error: '내부 서버 오류',
+    message: '요청을 처리하는 중 오류가 발생했습니다.'
+  });
 });
 
 // 서버 시작
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, async () => {
-    console.log(`서버가 포트 ${PORT}에서 실행 중입니다.`);
-
-    // 간단한 벡터 데이터베이스 초기화
-    try {
-      await simpleVectorDatabase.initialize();
-      const stats = simpleVectorDatabase.getStats();
-      console.log(`간단한 벡터 데이터베이스 준비 완료: ${stats.totalChunks}개 청킹`);
-    } catch (error) {
-      console.error('간단한 벡터 데이터베이스 초기화 실패:', error);
-    }
-  });
-}
+app.listen(PORT, () => {
+  console.log(`🚀 보안 강화된 챗봇 서버가 포트 ${PORT}에서 실행 중입니다.`);
+  console.log(`🔒 API 키 인증이 활성화되었습니다.`);
+  console.log(`📊 관리자 대시보드: /api/admin/statistics`);
+  console.log(`💬 챗봇 API: /api/chat/message`);
+});
 
 export default app; 

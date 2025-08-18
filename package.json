@@ -1,13 +1,14 @@
 {
   "name": "minsu-bot",
   "version": "1.0.0",
-  "description": "민수Bot - GPT API를 이용한 인사/노무 상담 챗봇",
+  "description": "Bot - GPT API를 이용한 인사/노무 상담 챗봇",
   "main": "src/server.ts",
   "scripts": {
     "dev": "ts-node src/server.ts",
     "start": "ts-node src/server.ts",
     "build": "tsc",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "vercel-build": "tsc"
   },
   "keywords": [
     "chatbot",

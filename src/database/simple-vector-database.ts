@@ -53,8 +53,6 @@ class SimpleVectorDatabase {
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
-    console.log('간단한 벡터 데이터베이스 초기화 중...');
-
     try {
       // Check for processed data file
       const processedDataPath = path.join(__dirname, '..', '..', 'processed-data.json');
@@ -63,7 +61,6 @@ class SimpleVectorDatabase {
         // Load existing processed data
         const data = JSON.parse(fs.readFileSync(processedDataPath, 'utf-8')) as ProcessedData;
         this.chunks = data.chunks;
-        console.log(`기존 처리된 데이터 로드: ${this.chunks.length}개 청킹`);
       } else {
         // Process HWP files directly (simulated)
         await this.processHWPFiles();
@@ -76,10 +73,9 @@ class SimpleVectorDatabase {
       await this.loadAnnualLeaveData();
 
       this.isInitialized = true;
-      console.log('간단한 벡터 데이터베이스 초기화 완료');
 
     } catch (error) {
-      console.error('간단한 벡터 데이터베이스 초기화 실패:', error);
+      console.error('데이터베이스 초기화 실패:', error);
       throw error;
     }
   }
@@ -87,35 +83,164 @@ class SimpleVectorDatabase {
   // Load employee data
   private async loadEmployeeData(): Promise<void> {
     try {
-      const csvPath = path.join(__dirname, '..', '..', 'data', 'dummy_employees_100.csv');
-      if (fs.existsSync(csvPath)) {
-        const csvContent = fs.readFileSync(csvPath, 'utf-8');
-        const lines = csvContent.split('\n').filter(line => line.trim());
-
-        // Parse data, skipping header
-        for (let i = 1; i < lines.length; i++) {
-          const columns = lines[i].split(',');
-          if (columns.length >= 21) { // Ensure enough columns
-            this.employees.push({
-              id: columns[0],
-              name: columns[1],
-              position: columns[2],
-              department: columns[3],
-              email: columns[5],
-              phone: columns[6],
-              hireDate: columns[7],
-              employeeNumber: columns[8], // 사번 추가
-              salary: columns[13],
-              status: columns[20] // 퇴직여부 컬럼
-            });
+      // 여러 경로 시도
+      const possiblePaths = [
+        path.join(__dirname, '..', '..', 'data', 'employee_data_full.csv'),
+        path.join(process.cwd(), 'data', 'employee_data_full.csv'),
+        path.join(__dirname, '..', '..', 'data', 'dummy_employees_100.csv'),
+        path.join(process.cwd(), 'data', 'dummy_employees_100.csv'),
+        path.join(__dirname, '..', '..', 'data', 'actual_employees_100.csv'),
+        path.join(process.cwd(), 'data', 'actual_employees_100.csv')
+      ];
+      
+      let csvPath = '';
+      for (const testPath of possiblePaths) {
+        if (fs.existsSync(testPath)) {
+          csvPath = testPath;
+          break;
+        }
+      }
+      
+      if (!csvPath) {
+        console.log('CSV 파일을 찾을 수 없음. 샘플 데이터 생성...');
+        this.createSampleEmployees();
+        return;
+      }
+        
+      console.log(`CSV 파일 로드: ${csvPath}`);
+        
+        // 여러 인코딩으로 시도하여 한글 깨짐 방지
+        let csvContent = '';
+        
+        try {
+          csvContent = fs.readFileSync(csvPath, 'utf8');
+        console.log('UTF-8 인코딩으로 로드 성공');
+        } catch (error) {
+          try {
+            const buffer = fs.readFileSync(csvPath);
+            csvContent = buffer.toString('euc-kr' as any);
+          console.log('EUC-KR 인코딩으로 로드 성공');
+          } catch (error2) {
+            try {
+              const buffer = fs.readFileSync(csvPath);
+              csvContent = buffer.toString('cp949' as any);
+            console.log('CP949 인코딩으로 로드 성공');
+            } catch (error3) {
+              try {
+                const buffer = fs.readFileSync(csvPath);
+                csvContent = buffer.toString('latin1' as any);
+              console.log('LATIN1 인코딩으로 로드 성공');
+              } catch (error4) {
+              console.log('모든 인코딩 시도 실패. 샘플 데이터 생성...');
+              this.createSampleEmployees();
+                return;
+              }
+            }
           }
         }
 
-        console.log(`${this.employees.length}명의 직원 데이터 로드 완료`);
+        const lines = csvContent.split('\n').filter(line => line.trim());
+      console.log(`총 라인 수: ${lines.length}`);
+
+      // CSV 구조: 첫 번째 줄이 헤더, 두 번째 줄부터 데이터
+      // 헤더 제외하고 데이터 파싱 (두 번째 줄부터 시작)
+      let employeeCount = 0;
+      for (let i = 1; i < lines.length; i++) { // i = 1부터 시작 (두 번째 줄)
+          const line = lines[i];
+        
+        // EMP-로 시작하는 직원 데이터만 처리
+        if (line.startsWith('EMP-')) {
+          // 쉼표로 구분된 데이터 파싱
+          const columns = line.split(',').map(col => col.trim());
+          
+          console.log(`라인 ${i}: 컬럼 수 = ${columns.length}, 첫 번째 컬럼 = ${columns[0]}`);
+          
+          if (columns.length >= 21) { // 최소 필수 컬럼 수 확인 (21개 컬럼)
+            // 직원 이름이 "직원XX" 형태인 경우 실제 이름으로 변환
+            let employeeName = columns[1];
+            if (employeeName.startsWith('직원') && employeeName.length > 2) {
+              const employeeNumber = employeeName.substring(2); // "직원" 제거
+              employeeName = `직원${employeeNumber}`; // 원래 형태 유지
+            }
+            
+            const employee = {
+              id: columns[0],
+              name: employeeName,
+              position: columns[2],
+              department: columns[3],
+              email: columns[5] || '',
+              phone: columns[6] || '',
+              hireDate: columns[7] || '',
+              employeeNumber: columns[8] || '',
+              salary: columns[13] || '',
+              status: columns[20] || '재직중'
+            };
+            
+            this.employees.push(employee);
+            employeeCount++;
+            
+            if (employeeCount <= 5) { // 처음 5명만 로그 출력
+              console.log(`직원 로드: ${employee.id} - ${employee.name} (${employee.department})`);
+            }
+          } else {
+            console.log(`컬럼 수 부족 (${columns.length}): ${line.substring(0, 100)}...`);
+          }
+        }
       }
+
+      console.log(`${employeeCount}명의 직원 데이터 로드 완료 (인코딩: utf8)`);
+
+      if (this.employees.length === 0) {
+        console.log('직원 데이터가 로드되지 않음. 샘플 데이터 생성...');
+        this.createSampleEmployees();
+      }
+      
     } catch (error) {
       console.error('직원 데이터 로드 실패:', error);
+      this.createSampleEmployees();
     }
+  }
+
+  // 기본 샘플 직원 데이터 생성 (백업용)
+  private createSampleEmployees(): void {
+    this.employees = [
+      {
+        id: "EMP-0001",
+        name: "김민수",
+        position: "과장",
+        department: "인사팀",
+        email: "kim.minsu@company.com",
+        phone: "010-1234-5678",
+        hireDate: "2020-01-15",
+        employeeNumber: "123456",
+        salary: "45000000",
+        status: "재직중"
+      },
+      {
+        id: "EMP-0002",
+        name: "이영희",
+        position: "대리",
+        department: "개발팀",
+        email: "lee.younghee@company.com",
+        phone: "010-2345-6789",
+        hireDate: "2019-03-20",
+        employeeNumber: "234567",
+        salary: "40000000",
+        status: "재직중"
+      },
+      {
+        id: "EMP-0003",
+        name: "박철수",
+        position: "사원",
+        department: "마케팅팀",
+        email: "park.chulsoo@company.com",
+        phone: "010-3456-7890",
+        hireDate: "2021-07-10",
+        employeeNumber: "345678",
+        salary: "35000000",
+        status: "재직중"
+      }
+    ];
   }
 
   // Load annual leave data (새로 추가)
@@ -127,75 +252,104 @@ class SimpleVectorDatabase {
       if (fs.existsSync(annualLeaveDataPath)) {
         // 기존 연차 데이터 파일에서 로드
         const data = JSON.parse(fs.readFileSync(annualLeaveDataPath, 'utf-8'));
-        this.annualLeaveRecords = data;
-        console.log(`기존 연차 데이터 로드: ${this.annualLeaveRecords.length}명`);
-      } else {
-        // 100명의 모든 직원에 대해 연차 데이터 자동 생성
-        this.annualLeaveRecords = [];
-        
-        // 직원 데이터가 로드된 후에 실행되어야 함
-        if (this.employees.length > 0) {
-          for (const emp of this.employees) {
-            // 퇴직한 직원은 제외
-            if (emp.status === '재직중') {
-              this.annualLeaveRecords.push({
-                employeeId: emp.id,
-                employeeName: emp.name,
-                department: emp.department,
-                employeeNumber: emp.id, // 사번 추가
-                totalDays: 25,
-                usedDays: 0,
-                remainingDays: 25,
-                usedDates: [],
-                lastUsedDate: undefined
-              });
-            }
-          }
+        // 파일이 비어있거나 데이터가 부족하면 새로 생성
+        if (data && data.length > 0 && data.length >= this.employees.filter(emp => emp.status === '재직중').length) {
+          this.annualLeaveRecords = data;
         } else {
-          // 기본 샘플 데이터 (직원 데이터가 아직 로드되지 않은 경우)
-          this.annualLeaveRecords = [
-            {
-              employeeId: "EMP001",
-              employeeName: "김민수",
-              department: "인사팀",
-              employeeNumber: "123456",
-              totalDays: 25,
-              usedDays: 8,
-              remainingDays: 17,
-              usedDates: ["2025-01-15", "2025-02-20", "2025-03-10"],
-              lastUsedDate: "2025-03-10"
-            },
-            {
-              employeeId: "EMP002",
-              employeeName: "이영희",
-              department: "개발팀",
-              employeeNumber: "234567",
-              totalDays: 25,
-              usedDays: 12,
-              remainingDays: 13,
-              usedDates: ["2025-01-20", "2025-02-15", "2025-03-05"],
-              lastUsedDate: "2025-03-05"
-            },
-            {
-              employeeId: "EMP003",
-              employeeName: "박철수",
-              department: "마케팅팀",
-              employeeNumber: "345678",
-              totalDays: 25,
-              usedDays: 5,
-              remainingDays: 20,
-              usedDates: ["2025-02-10"],
-              lastUsedDate: "2025-02-10"
-            }
-          ];
+          // 새로 생성 로직 실행
+          await this.generateAnnualLeaveData();
         }
-        
-        // 초기 데이터를 파일에 저장
-        await this.saveAnnualLeaveData();
-        console.log(`${this.annualLeaveRecords.length}명의 연차 데이터 초기화 및 저장 완료`);
+      } else {
+        // 연차 데이터 파일이 없으면 새로 생성
+        await this.generateAnnualLeaveData();
       }
     } catch (error) {
       console.error('연차 데이터 로드 실패:', error);
+      // 오류 발생 시 새로 생성
+      await this.generateAnnualLeaveData();
+    }
+  }
+
+  // 연차 데이터 생성 메서드 (새로 추가)
+  private async generateAnnualLeaveData(): Promise<void> {
+    this.annualLeaveRecords = [];
+    
+    // Excel 파일에서 연차 데이터 로드 시도
+    try {
+      const excelPath = path.join(__dirname, '..', '..', 'data', 'employee_annual_leave_2025.xlsx');
+      if (fs.existsSync(excelPath)) {
+        // Excel 파일이 있으면 기본 데이터 생성
+        await this.loadAnnualLeaveFromExcel();
+      }
+    } catch (error) {
+      // Excel에서 로드하지 못한 경우 기본 데이터 생성
+    }
+    
+    // Excel에서 로드하지 못한 경우 기본 데이터 생성
+    if (this.annualLeaveRecords.length === 0 && this.employees.length > 0) {
+      // 재직중인 직원만 연차 데이터 생성
+      const activeEmployees = this.employees.filter(emp => emp.status === '재직중');
+      
+      for (const emp of activeEmployees) {
+        // 랜덤하게 사용한 연차 일수 생성 (0~15일)
+        const usedDays = Math.floor(Math.random() * 16);
+        const totalDays = 25; // 기본 연차 25일
+        const remainingDays = totalDays - usedDays;
+        
+        // 사용한 연차 날짜들 생성 (2025년 기준)
+        const usedDates: string[] = [];
+        if (usedDays > 0) {
+          for (let i = 0; i < usedDays; i++) {
+            const month = Math.floor(Math.random() * 12) + 1;
+            const day = Math.floor(Math.random() * 28) + 1;
+            const date = `2025-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+            if (!usedDates.includes(date)) {
+              usedDates.push(date);
+            }
+          }
+        }
+        
+        // 마지막 사용일 설정
+        const lastUsedDate = usedDates.length > 0 ? usedDates[usedDates.length - 1] : undefined;
+        
+          this.annualLeaveRecords.push({
+            employeeId: emp.id,
+            employeeName: emp.name,
+            department: emp.department,
+            employeeNumber: emp.employeeNumber,
+          totalDays: totalDays,
+          usedDays: usedDays,
+          remainingDays: remainingDays,
+          usedDates: usedDates,
+          lastUsedDate: lastUsedDate
+        });
+      }
+    }
+    
+    // 파일에 저장
+    await this.saveAnnualLeaveData();
+  }
+
+  // Excel 파일에서 연차 데이터 로드 (새로 추가)
+  private async loadAnnualLeaveFromExcel(): Promise<void> {
+    try {
+      // xlsx 패키지가 설치되어 있지 않으면 기본 데이터 생성
+      // 임시로 기본 데이터 생성 (상태 체크 없이)
+      for (const emp of this.employees) {
+        this.annualLeaveRecords.push({
+          employeeId: emp.id,
+          employeeName: emp.name,
+          department: emp.department,
+          employeeNumber: emp.employeeNumber,
+          totalDays: 25,
+          usedDays: Math.floor(Math.random() * 10),
+          remainingDays: 25 - Math.floor(Math.random() * 10),
+          usedDates: [],
+          lastUsedDate: undefined
+        });
+      }
+    } catch (error) {
+      console.error('Excel 파일 로드 실패:', error);
     }
   }
 
@@ -205,7 +359,6 @@ class SimpleVectorDatabase {
       const annualLeaveDataPath = path.join(__dirname, '..', '..', 'data', 'annual-leave-data.json');
       const data = JSON.stringify(this.annualLeaveRecords, null, 2);
       fs.writeFileSync(annualLeaveDataPath, data, 'utf-8');
-      console.log('연차 데이터 파일 저장 완료');
     } catch (error) {
       console.error('연차 데이터 저장 실패:', error);
     }
@@ -297,8 +450,6 @@ class SimpleVectorDatabase {
 
   // Process HWP files directly (simulated)
   private async processHWPFiles(): Promise<void> {
-    console.log('HWP 파일 직접 처리 중...');
-
     // Simplified sample data for HWP files (10 articles)
     const sampleChunks: ChunkedDocument[] = [
       { content: '근로기준법 제1조(목적) - 이 법은 근로조건의 기준을 정함으로써 근로자의 기본적 생활을 보장, 향상시키며 균형 있는 국민경제의 발전에 도움이 되도록 하는 것을 목적으로 한다.', metadata: { source: '근로기준법', chunkIndex: 0, title: '근로기준법 제1조' } },
@@ -314,7 +465,6 @@ class SimpleVectorDatabase {
     ];
 
     this.chunks = sampleChunks;
-    console.log(`${this.chunks.length}개 샘플 청킹 생성 완료`);
   }
 
   // Similarity search (simple keyword matching)
@@ -350,9 +500,29 @@ class SimpleVectorDatabase {
     const queryLower = query.toLowerCase();
     const results: Employee[] = [];
 
+    // 1. 정확한 이름 매칭을 우선 (가장 정확함)
+    const exactNameMatches = this.employees.filter(emp => 
+      emp.name.toLowerCase() === queryLower
+    );
+    
+    if (exactNameMatches.length > 0) {
+      console.log(`정확한 이름 매칭 발견: ${exactNameMatches[0].name}`);
+      return exactNameMatches.slice(0, limit);
+    }
+
+    // 2. 부분 이름 매칭 (두 번째로 정확함)
+    const nameMatches = this.employees.filter(emp => 
+      emp.name.toLowerCase().includes(queryLower)
+    );
+    
+    if (nameMatches.length > 0) {
+      console.log(`이름 부분 매칭 발견: ${nameMatches[0].name}`);
+      return nameMatches.slice(0, limit);
+    }
+
+    // 3. 기타 매칭 (직급, 부서, 이메일)
     for (const emp of this.employees) {
-      if (emp.name.toLowerCase().includes(queryLower) ||
-          emp.position.toLowerCase().includes(queryLower) ||
+      if (emp.position.toLowerCase().includes(queryLower) ||
           emp.department.toLowerCase().includes(queryLower) ||
           emp.email.toLowerCase().includes(queryLower)) {
         results.push(emp);

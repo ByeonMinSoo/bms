@@ -68,7 +68,7 @@ function analyzeUserIntent(message: string): {
 // 직원 검색 함수
 async function searchEmployees(query: string, entities: string[]): Promise<Employee[]> {
   try {
-    const response = await fetch('https://bms-git-master-byeonminsoos-projects.vercel.app/employees.json');
+    const response = await fetch('/employees.json');
     const employees: Employee[] = await response.json();
     
     if (!query && entities.length === 0) return employees;
@@ -99,7 +99,7 @@ async function searchEmployees(query: string, entities: string[]): Promise<Emplo
 // 연차 검색 함수
 async function searchAnnualLeave(query: string, entities: string[]): Promise<AnnualLeave[]> {
   try {
-    const response = await fetch('https://bms-git-master-byeonminsoos-projects.vercel.app/annual-leave.json');
+    const response = await fetch('/annual-leave.json');
     const annualLeaves: AnnualLeave[] = await response.json();
     
     if (!query && entities.length === 0) return annualLeaves;
@@ -129,8 +129,8 @@ async function searchAnnualLeave(query: string, entities: string[]): Promise<Ann
 async function getDepartmentInfo(department: string): Promise<{ employees: Employee[], annualLeaves: AnnualLeave[] }> {
   try {
     const [employeesResponse, annualLeaveResponse] = await Promise.all([
-      fetch('https://bms-git-master-byeonminsoos-projects.vercel.app/employees.json'),
-      fetch('https://bms-git-master-byeonminsoos-projects.vercel.app/annual-leave.json')
+      fetch('/employees.json'),
+      fetch('/annual-leave.json')
     ]);
     
     const employees: Employee[] = await employeesResponse.json();
